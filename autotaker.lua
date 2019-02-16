@@ -224,7 +224,7 @@ function imgui.OnDrawFrame()
 						ini.police_items.blglasses = police_items['blglasses'].v
 						inicfg.save(ini, "autotaker")
 					end
-					if imgui.Checkbox(names['police_items']['blglasses'], police_items['ccap']) then
+					if imgui.Checkbox(names['police_items']['ccap'], police_items['ccap']) then
 						ini.police_items.ccap = police_items['ccap'].v
 						inicfg.save(ini, "autotaker")
 					end
