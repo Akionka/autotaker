@@ -17,7 +17,6 @@ u8 = encoding.UTF8
 
 local ini = inicfg.load({
 	settings = {
-		startmsg = true,
 		typescriptwork = 0, -- 0 - PD, 1 - FBI, 2 - Army
 		active = false
 	},
@@ -57,6 +56,32 @@ local ini = inicfg.load({
 	army_items = {
 		armor = false,
 		ls = false
+	},
+	police_guns = {
+		stick = false,
+		m4 = false,
+		mp5 = false,
+		deagle = false,
+		rifle = false,
+		shotgun = false,
+	},
+	fbi_guns = {
+		stick = false,
+		m4 = false,
+		mp5 = false,
+		deagle = false,
+		rifle = false,
+		shotgun = false,
+		srifle = false,
+		sawed = false,
+		grens = false
+	},
+	army_guns = {
+		m4 = false,
+		mp5 = false,
+		deagle = false,
+		rifle = false,
+		shotgun = false,
 	},
 }, "autotaker")
 
@@ -98,6 +123,29 @@ local fbi_items = {
 local army_items = {
 	armor = imgui.ImBool(ini.army_items.armor),
 	ls = imgui.ImBool(ini.army_items.ls)}
+local police_guns = {
+	stick = imgui.ImBool(ini.police_guns.stick),
+	m4 = imgui.ImBool(ini.police_guns.m4),
+	mp5 = imgui.ImBool(ini.police_guns.mp5),
+	deagle = imgui.ImBool(ini.police_guns.deagle),
+	rifle = imgui.ImBool(ini.police_guns.rifle),
+	shotgun = imgui.ImBool(ini.police_guns.shotgun)}
+local fbi_guns = {
+	stick = imgui.ImBool(ini.fbi_guns.stick),
+	m4 = imgui.ImBool(ini.fbi_guns.m4),
+	mp5 = imgui.ImBool(ini.fbi_guns.mp5),
+	deagle = imgui.ImBool(ini.fbi_guns.deagle),
+	rifle = imgui.ImBool(ini.fbi_guns.rifle),
+	shotgun = imgui.ImBool(ini.fbi_guns.shotgun),
+	srifle = imgui.ImBool(ini.fbi_guns.srifle),
+	sawed = imgui.ImBool(ini.fbi_guns.sawed),
+	grens = imgui.ImBool(ini.fbi_guns.grens)}
+local army_guns = {
+	m4 = imgui.ImBool(ini.army_guns.m4),
+	mp5 = imgui.ImBool(ini.army_guns.mp5),
+	deagle = imgui.ImBool(ini.army_guns.deagle),
+	rifle = imgui.ImBool(ini.army_guns.rifle),
+	shotgun = imgui.ImBool(ini.army_guns.shotgun)}
 local names = {
 	police_items = {
 		armor = "Бронежилет", -- Бронежилет
@@ -135,8 +183,18 @@ local names = {
 	army_items = {
 		armor = "Бронежилет", -- Бронежилет
 		ls = "Громкоговоритель", -- Громкоговоритель
-	}
-}
+	},
+	guns = {
+		stick = 'Полицейская дубинка',
+		m4 = 'M4', -- M4
+		mp5 = 'MP5', -- MP5
+		shotgun = 'Shotgun', -- Shotgun
+		rifle = 'Rifle', -- Rifle
+		deagle = 'Desert Eagle', -- Desert Eagle
+		srifle = 'Снайперская винтовка', -- Sniper Rifle
+		sawed = 'Обрез', -- Sawed-off shotgun
+		grens = 'Гранаты', -- Grenades
+	}}
 local ids = {
 	police_items = {
 		armor = 1, -- Бронежилет
@@ -174,8 +232,33 @@ local ids = {
 	army_items = {
 		armor = 0, -- Бронежилет
 		ls = 1, -- Громкоговоритель
-	}
-}
+	},
+	police_guns = {
+		stick = 0,
+		m4 = 1, -- M4
+		mp5 = 2, -- MP5
+		deagle = 5, -- Desert Eagle
+		rifle = 4, -- Rifle
+		shotgun = 3, -- Shotgun
+	},
+	fbi_guns = {
+		stick = 0,
+		m4 = 1, -- M4
+		mp5 = 2, -- MP5
+		shotgun = 3, -- Shotgun
+		rifle = 4, -- Rifle
+		deagle = 5, -- Desert Eagle
+		srifle = 6, -- Sniper Rifle
+		sawed = 7, -- Sawed-off shotgun
+		grens = 8, -- Grenades
+	},
+	army_guns = {
+		m4 = 0, -- M4
+		mp5 = 1, -- MP5
+		deagle = 2, -- Desert Eagle
+		rifle = 3, -- Rifle
+		shotgun = 4, -- Shotgun
+	}}
 function imgui.OnDrawFrame()
   if settings_window_state.v then
 		imgui.Begin("AutoTaker", settings_window_state, 66)
@@ -319,12 +402,97 @@ function imgui.OnDrawFrame()
 			end
 			imgui.Separator()
 		end
+		if imgui.CollapsingHeader("Список оружия") then
+			if typescriptwork.v == 0 then
+					if imgui.Checkbox(names['guns']['stick'], police_guns['stick']) then
+						ini.police_guns.stick = police_guns['stick'].v
+						inicfg.save(ini, "autotaker")
+					end
+					if imgui.Checkbox(names['guns']['m4'], police_guns['m4']) then
+						ini.police_guns.m4 = police_guns['m4'].v
+						inicfg.save(ini, "autotaker")
+					end
+					if imgui.Checkbox(names['guns']['mp5'], police_guns['mp5']) then
+						ini.police_guns.mp5 = police_guns['mp5'].v
+						inicfg.save(ini, "autotaker")
+					end
+					if imgui.Checkbox(names['guns']['shotgun'], police_guns['shotgun']) then
+						ini.police_guns.shotgun = police_guns['shotgun'].v
+						inicfg.save(ini, "autotaker")
+					end
+					if imgui.Checkbox(names['guns']['rifle'], police_guns['rifle']) then
+						ini.police_guns.rifle = police_guns['rifle'].v
+						inicfg.save(ini, "autotaker")
+					end
+					if imgui.Checkbox(names['guns']['deagle'], police_guns['deagle']) then
+						ini.police_guns.deagle = police_guns['deagle'].v
+						inicfg.save(ini, "autotaker")
+					end
+			end
+			if typescriptwork.v == 1 then
+				if imgui.Checkbox(names['guns']['stick'], fbi_guns['stick']) then
+					ini.fbi_guns.stick = fbi_guns['stick'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['m4'], fbi_guns['m4']) then
+					ini.fbi_guns.m4 = fbi_guns['m4'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['mp5'], fbi_guns['mp5']) then
+					ini.fbi_guns.mp5 = fbi_guns['mp5'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['deagle'], fbi_guns['deagle']) then
+					ini.fbi_guns.deagle = fbi_guns['deagle'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['rifle'], fbi_guns['rifle']) then
+					ini.fbi_guns.rifle = fbi_guns['rifle'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['shotgun'], fbi_guns['shotgun']) then
+					ini.fbi_guns.shotgun = fbi_guns['shotgun'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['srifle'], fbi_guns['srifle']) then
+					ini.fbi_guns.srifle = fbi_guns['srifle'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['sawed'], fbi_guns['sawed']) then
+					ini.fbi_guns.sawed = fbi_guns['sawed'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['grens'], fbi_guns['grens']) then
+					ini.fbi_guns.grens = fbi_guns['grens'].v
+					inicfg.save(ini, "autotaker")
+				end
+			end
+			if typescriptwork.v == 2 then
+				if imgui.Checkbox(names['guns']['m4'], army_guns['m4']) then
+					ini.army_guns.m4 = army_guns['m4'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['mp5'], army_guns['mp5']) then
+					ini.army_guns.mp5 = army_guns['mp5'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['deagle'], army_guns['deagle']) then
+					ini.army_guns.deagle = army_guns['deagle'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['rifle'], army_guns['rifle']) then
+					ini.army_guns.rifle = army_guns['rifle'].v
+					inicfg.save(ini, "autotaker")
+				end
+				if imgui.Checkbox(names['guns']['shotgun'], army_guns['shotgun']) then
+					ini.army_guns.shotgun = army_guns['shotgun'].v
+					inicfg.save(ini, "autotaker")
+				end
+			end
+			imgui.Separator()
+		end
 		if imgui.Checkbox("Активно?", active) then
 			ini.settings.active = active.v
-			inicfg.save(ini, "autotaker")
-		end
-		if imgui.Checkbox("Стартовое сообщение", startmsg) then
-			ini.settings.startmsg = startmsg.v
 			inicfg.save(ini, "autotaker")
 		end
 		imgui.End()
@@ -367,10 +535,35 @@ function sampev.onSendPickedUpPickup(id)
 					end
 				end
 			end
-			pickup_id = id
+		end
+	end
+	if get_pickup_model(id, pickup) == 2061 then
+		if #order == 0 then
+			if ini.settings.typescriptwork == 0 then
+				for k, v in pairs(ini.police_guns) do
+					if v then
+						table.insert(order, ids['police_guns'][k])
+					end
+				end
+			end
+			if ini.settings.typescriptwork == 1 then
+				for k, v in pairs(ini.fbi_guns) do
+					if v then
+						table.insert(order, ids['fbi_guns'][k])
+					end
+				end
+			end
+			if ini.settings.typescriptwork == 2 then
+				for k, v in pairs(ini.army_guns) do
+					if v then
+						table.insert(order, ids['army_guns'][k])
+					end
+				end
+			end
 		end
 	end
 end
+
 function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
 	if id == 81 and ini.settings.active then
 		if #order == 0 then
@@ -397,14 +590,24 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
 		sampSendDialogResponse(id, 1, 0, "")
 		return false
 	end
+	if id == 77 then
+		for k, v in pairs(order) do
+			if v then
+				sampSendDialogResponse(id, 1, order[1], "")
+				table.remove(order, 1)
+				return false
+			end
+		end
+	end
 end
 
 function main()
   if not isSampfuncsLoaded() or not isSampLoaded() then return end
   while not isSampAvailable() do wait(0) end
+	sampAddChatMessage(u8:decode("[AutoTaker]: Скрипт {00FF00}успешно{FFFFFF} загружен. Версия: {2980b9}"..thisScript().version.."{FFFFFF}. Автор - {2980b9}Akionka{FFFFFF}."), -1)
 
-	-- update()
-	-- while updateinprogess ~= false do wait(0) if isGoUpdate then isGoUpdate = false goupdate() end end
+	update()
+	while updateinprogess ~= false do wait(0) if isGoUpdate then isGoUpdate = false goupdate() end end
 
 	sampRegisterChatCommand('autotaker', function() settings_window_state.v = not settings_window_state.v end)
 	while true do
@@ -415,7 +618,7 @@ function main()
 end
 
 function update()
-	local fpath = os.getenv('TEMP') .. '\\checker-version.json'
+	local fpath = os.getenv('TEMP') .. '\\autotaker-version.json'
 	downloadUrlToFile('https://raw.githubusercontent.com/Akionka/autotaker/master/version.json', fpath, function(id, status, p1, p2)
 		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
 			local f = io.open(fpath, 'r')
