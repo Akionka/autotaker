@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.0')
-script_version_number(1)
+script_version('1.1')
+script_version_number(2)
 
 local sampev = require 'lib.samp.events'
 local encoding = require 'encoding'
@@ -88,7 +88,6 @@ local ini = inicfg.load({
 local settings_window_state = imgui.ImBool(false)
 local active = imgui.ImBool(ini.settings.active)
 local typescriptwork = imgui.ImInt(ini.settings.typescriptwork)
-local startmsg = imgui.ImBool(ini.settings.startmsg)
 local police_items = {
 	armor = imgui.ImBool(ini.police_items.armor),
 	shield = imgui.ImBool(ini.police_items.shield),
