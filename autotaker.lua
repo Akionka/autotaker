@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.1')
-script_version_number(2)
+script_version('1.2')
+script_version_number(3)
 
 local sampev = require 'lib.samp.events'
 local encoding = require 'encoding'
@@ -589,7 +589,7 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
 		sampSendDialogResponse(id, 1, 0, "")
 		return false
 	end
-	if id == 77 then
+	if (id == 76 or id == 77 or id == 78) and ini.settings.active then
 		for k, v in pairs(order) do
 			if v then
 				sampSendDialogResponse(id, 1, order[1], "")
