@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.2')
-script_version_number(3)
+script_version('1.3')
+script_version_number(4)
 
 local sampev = require 'lib.samp.events'
 local encoding = require 'encoding'
@@ -564,7 +564,7 @@ function sampev.onSendPickedUpPickup(id)
 end
 
 function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
-	if id == 81 and ini.settings.active then
+	if (id == 81 or id == 83) and ini.settings.active then
 		if #order == 0 then
 			locked = true
 			sampAddChatMessage(u8:decode("[AutoTaker]: Можете отходить от пикапа. В теченее следующих {2980b9}6 секунд{FFFFFF} он будет неактивен."), -1)
