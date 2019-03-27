@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.3')
-script_version_number(4)
+script_version('1.3.1')
+script_version_number(5)
 
 local sampev = require 'lib.samp.events'
 local encoding = require 'encoding'
@@ -30,11 +30,11 @@ local ini = inicfg.load({
 		bglasses = false, -- Очки «Police Black»
 		rglasses = false, -- Очки «Police Red»
 		blglasses = false, -- Очки «Police Blue»
+		gmask = false, -- Противогаз
 		ccap = false, -- Парадная фуражка
 		ocap = false, -- Офицерская фуражка
 		bhh = false, -- Черная полицейская каска
 		blhh = false, -- Синяя полицейская каска
-		gmask = false, -- Противогаз
 		helmet = false, -- Шлем патрульного
 		pcap = false, -- Полицейская кепка
 		baton = false, -- Жезл регулировщика
@@ -98,11 +98,11 @@ local police_items = {
 	bglasses = imgui.ImBool(ini.police_items.bglasses),
 	rglasses = imgui.ImBool(ini.police_items.rglasses),
 	blglasses = imgui.ImBool(ini.police_items.blglasses),
+	gmask = imgui.ImBool(ini.police_items.gmask),
 	ccap = imgui.ImBool(ini.police_items.ccap),
 	ocap = imgui.ImBool(ini.police_items.ocap),
 	bhh = imgui.ImBool(ini.police_items.bhh),
 	blhh = imgui.ImBool(ini.police_items.blhh),
-	gmask = imgui.ImBool(ini.police_items.gmask),
 	helmet = imgui.ImBool(ini.police_items.helmet),
 	pcap = imgui.ImBool(ini.police_items.pcap),
 	baton = imgui.ImBool(ini.police_items.baton),
@@ -156,11 +156,11 @@ local names = {
 		bglasses = "Очки «Police Black»", -- Очки «Police Black»
 		rglasses = "Очки «Police Red»", -- Очки «Police Red»
 		blglasses = "Очки «Police Blue»", -- Очки «Police Blue»
+		gmask = "Противогаз", -- Противогаз
 		ccap = "Парадная фуражка", -- Парадная фуражка
 		ocap = "Офицерская фуражка", -- Офицерская фуражка
 		bhh = "Черная полицейская каска", -- Черная полицейская каска
 		blhh = "Синяя полицейская каска", -- Синяя полицейская каска
-		gmask = "Противогаз", -- Противогаз
 		helmet = "Шлем патрульного", -- Шлем патрульного
 		pcap = "Полицейская кепка", -- Полицейская кепка
 		baton = "Жезл регулировщика", -- Жезл регулировщика
@@ -205,11 +205,11 @@ local ids = {
 		bglasses = 7, -- Очки «Police Black»
 		rglasses = 8, -- Очки «Police Red»
 		blglasses = 9, -- Очки «Police Blue»
-		ccap = 10, -- Парадная фуражка
-		ocap = 11, -- Офицерская фуражка
-		bhh = 12, -- Черная полицейская каска
-		blhh = 13, -- Синяя полицейская каска
-		gmask = 14, -- Противогаз
+		gmask = 10, -- Противогаз
+		ccap = 11, -- Парадная фуражка
+		ocap = 12, -- Офицерская фуражка
+		bhh = 13, -- Черная полицейская каска
+		blhh = 14, -- Синяя полицейская каска
 		helmet = 15, -- Шлем патрульного
 		pcap = 16, -- Полицейская кепка
 		baton = 17, -- Жезл регулировщика
@@ -235,7 +235,7 @@ local ids = {
 	police_guns = {
 		stick = 0,
 		m4 = 1, -- M4
-		mp5 = 2, -- MP5
+		mp5 = 7, -- MP5
 		deagle = 5, -- Desert Eagle
 		rifle = 4, -- Rifle
 		shotgun = 3, -- Shotgun
