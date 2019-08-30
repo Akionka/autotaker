@@ -1,651 +1,684 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.3.1')
-script_version_number(5)
+script_version('1.4.0')
+script_version_number(6)
+script_moonloader(27)
 
-local sampev = require 'lib.samp.events'
-local encoding = require 'encoding'
-local inicfg = require 'inicfg'
-local imgui = require 'imgui'
-local dlstatus = require 'moonloader'.download_status
-local isGoUpdate = false
+require 'deps' {
+  'fyp:samp-lua',
+  'fyp:moon-imgui',
+}
+
+local sampev           = require 'lib.samp.events'
+local encoding         = require 'encoding'
+local imgui            = require 'imgui'
+
+
+local updatesAvaliable = false
+
+encoding.default       = 'cp1251'
+local u8               = encoding.UTF8
+
+local prefix           = 'Autotaker'
 local close_next = false
-local order = {}
-local locked = false
+local orderList      = {}
+local locked     = false
 encoding.default = 'cp1251'
 u8 = encoding.UTF8
 
-local ini = inicfg.load({
-	settings = {
-		typescriptwork = 0, -- 0 - PD, 1 - FBI, 2 - Army
-		active = false
-	},
-	police_items = {
-		armor = false, -- Бронежилет
-		shield = false, -- Полицейский щит
-		torch = false, -- Фонарик
-		bhelmet = false, -- Чёрный шлем SWAT
-		whelmet = false, -- Белый шлем SWAT
-		mask = false, -- Вязаная маска
-		bglasses = false, -- Очки «Police Black»
-		rglasses = false, -- Очки «Police Red»
-		blglasses = false, -- Очки «Police Blue»
-		gmask = false, -- Противогаз
-		ccap = false, -- Парадная фуражка
-		ocap = false, -- Офицерская фуражка
-		bhh = false, -- Черная полицейская каска
-		blhh = false, -- Синяя полицейская каска
-		helmet = false, -- Шлем патрульного
-		pcap = false, -- Полицейская кепка
-		baton = false, -- Жезл регулировщика
-		vest = false, -- Оранжевый жилет
-		brhat = false, -- Черная шляпа шерифа
-		bhat = false -- Коричневая шляпа шерифа
-	},
-	fbi_items = {
-		armor = false, -- Бронежилет
-		shield = false, -- Полицейский щит
-		torch = false, -- Фонарик
-		bhelmet = false, -- Чёрный шлем SWAT
-		whelmet = false, -- Белый шлем SWAT
-		mask = false, -- Вязаная маска
-		bglasses = false, -- Очки «Police Black»
-		rglasses = false, -- Очки «Police Red»
-		blglasses = false, -- Очки «Police Blue»
-	},
-	army_items = {
-		armor = false,
-		ls = false
-	},
-	police_guns = {
-		stick = false,
-		m4 = false,
-		mp5 = false,
-		deagle = false,
-		rifle = false,
-		shotgun = false,
-	},
-	fbi_guns = {
-		stick = false,
-		m4 = false,
-		mp5 = false,
-		deagle = false,
-		rifle = false,
-		shotgun = false,
-		srifle = false,
-		sawed = false,
-		grens = false
-	},
-	army_guns = {
-		m4 = false,
-		mp5 = false,
-		deagle = false,
-		rifle = false,
-		shotgun = false,
-	},
-}, "autotaker")
+local data = {
+  settings = {
+    typescriptwork         = 0, --[[
+      0 - PD,
+      1 - FBI,
+      2 - Army
+    ]]
+    active                 = false,
+    alwaysAutoCheckUpdates = false,
+  },
+  police_items = {
+    armor     = false, -- Бронежилет
+    nvdevice  = false, -- Прибор ночного видения
+    shield    = false, -- Полицейский щит
+    torch     = false, -- Фонарик
+    bhelmet   = false, -- Чёрный шлем SWAT
+    whelmet   = false, -- Белый шлем SWAT
+    mask      = false, -- Вязаная маска
+    bglasses  = false, -- Очки «Police Black»
+    rglasses  = false, -- Очки «Police Red»
+    blglasses = false, -- Очки «Police Blue»
+    gmask     = false, -- Противогаз
+    ccap      = false, -- Парадная фуражка
+    ocap      = false, -- Офицерская фуражка
+    bhh       = false, -- Черная полицейская каска
+    blhh      = false, -- Синяя полицейская каска
+    helmet    = false, -- Шлем патрульного
+    pcap      = false, -- Полицейская кепка
+    baton     = false, -- Жезл регулировщика
+    vest      = false, -- Оранжевый жилет
+    brhat     = false, -- Черная шляпа шерифа
+    bhat      = false, -- Коричневая шляпа шерифа
+  },
+  fbi_items = {
+    armor     = false, -- Бронежилет
+    nvdevice  = false, -- Прибор ночного видения
+    shield    = false, -- Полицейский щит
+    torch     = false, -- Фонарик
+    bhelmet   = false, -- Чёрный шлем SWAT
+    whelmet   = false, -- Белый шлем SWAT
+    mask      = false, -- Вязаная маска
+    bglasses  = false, -- Очки «Police Black»
+    rglasses  = false, -- Очки «Police Red»
+    blglasses = false, -- Очки «Police Blue»
+    gmask     = false, -- Противогаз
+  },
+  army_items = {
+    armor       = false, -- Бронежилет
+    nvdevice    = false, -- Прибор ночного видения
+    ls          = false, -- Громкоговоритель
+    beretarmy   = false, -- Берет «Army»
+    beretkrap   = false, -- Берет «Krap»
+    beretdesant = false, -- Берет «Desant»
+  },
+  police_guns = {
+    m4      = false,
+    stick   = false,
+    mp5     = false,
+    deagle  = false,
+    rifle   = false,
+    shotgun = false,
+  },
+  fbi_guns = {
+    stick   = false,
+    m4      = false,
+    mp5     = false,
+    deagle  = false,
+    rifle   = false,
+    shotgun = false,
+    srifle  = false,
+    sawed   = false,
+    grens   = false
+  },
+  army_guns = {
+    m4      = false,
+    mp5     = false,
+    deagle  = false,
+    rifle   = false,
+    shotgun = false,
+  },
+}
 
-local settings_window_state = imgui.ImBool(false)
-local active = imgui.ImBool(ini.settings.active)
-local typescriptwork = imgui.ImInt(ini.settings.typescriptwork)
+local mainWindowState = imgui.ImBool(true)
+local active          = imgui.ImBool(false)
+local typescriptwork  = imgui.ImInt(0)
+
 local police_items = {
-	armor = imgui.ImBool(ini.police_items.armor),
-	shield = imgui.ImBool(ini.police_items.shield),
-	torch = imgui.ImBool(ini.police_items.torch),
-	bhelmet = imgui.ImBool(ini.police_items.bhelmet),
-	whelmet = imgui.ImBool(ini.police_items.whelmet),
-	mask = imgui.ImBool(ini.police_items.mask),
-	bglasses = imgui.ImBool(ini.police_items.bglasses),
-	rglasses = imgui.ImBool(ini.police_items.rglasses),
-	blglasses = imgui.ImBool(ini.police_items.blglasses),
-	gmask = imgui.ImBool(ini.police_items.gmask),
-	ccap = imgui.ImBool(ini.police_items.ccap),
-	ocap = imgui.ImBool(ini.police_items.ocap),
-	bhh = imgui.ImBool(ini.police_items.bhh),
-	blhh = imgui.ImBool(ini.police_items.blhh),
-	helmet = imgui.ImBool(ini.police_items.helmet),
-	pcap = imgui.ImBool(ini.police_items.pcap),
-	baton = imgui.ImBool(ini.police_items.baton),
-	vest = imgui.ImBool(ini.police_items.vest),
-	brhat = imgui.ImBool(ini.police_items.brhat),
-	bhat = imgui.ImBool(ini.police_items.bhat)}
+  armor     = imgui.ImBool(false),
+  nvdevice  = imgui.ImBool(false),
+  shield    = imgui.ImBool(false),
+  torch     = imgui.ImBool(false),
+  bhelmet   = imgui.ImBool(false),
+  whelmet   = imgui.ImBool(false),
+  mask      = imgui.ImBool(false),
+  bglasses  = imgui.ImBool(false),
+  rglasses  = imgui.ImBool(false),
+  blglasses = imgui.ImBool(false),
+  gmask     = imgui.ImBool(false),
+  ccap      = imgui.ImBool(false),
+  ocap      = imgui.ImBool(false),
+  bhh       = imgui.ImBool(false),
+  blhh      = imgui.ImBool(false),
+  helmet    = imgui.ImBool(false),
+  pcap      = imgui.ImBool(false),
+  baton     = imgui.ImBool(false),
+  vest      = imgui.ImBool(false),
+  brhat     = imgui.ImBool(false),
+  bhat      = imgui.ImBool(false),
+}
+
 local fbi_items = {
-	armor = imgui.ImBool(ini.fbi_items.armor),
-	shield = imgui.ImBool(ini.fbi_items.shield),
-	torch = imgui.ImBool(ini.fbi_items.torch),
-	bhelmet = imgui.ImBool(ini.fbi_items.bhelmet),
-	whelmet = imgui.ImBool(ini.fbi_items.whelmet),
-	mask = imgui.ImBool(ini.fbi_items.mask),
-	bglasses = imgui.ImBool(ini.fbi_items.bglasses),
-	rglasses = imgui.ImBool(ini.fbi_items.rglasses),
-	blglasses = imgui.ImBool(ini.fbi_items.blglasses)}
+  armor     = imgui.ImBool(false),
+  nvdevice  = imgui.ImBool(false),
+  shield    = imgui.ImBool(false),
+  torch     = imgui.ImBool(false),
+  bhelmet   = imgui.ImBool(false),
+  whelmet   = imgui.ImBool(false),
+  mask      = imgui.ImBool(false),
+  bglasses  = imgui.ImBool(false),
+  rglasses  = imgui.ImBool(false),
+  blglasses = imgui.ImBool(false),
+  gmask     = imgui.ImBool(false),
+}
+
 local army_items = {
-	armor = imgui.ImBool(ini.army_items.armor),
-	ls = imgui.ImBool(ini.army_items.ls)}
+  armor       = imgui.ImBool(false),
+  nvdevice    = imgui.ImBool(false),
+  ls          = imgui.ImBool(false),
+  beretarmy   = imgui.ImBool(false),
+  beretkrap   = imgui.ImBool(false),
+  beretdesant = imgui.ImBool(false),
+}
+
 local police_guns = {
-	stick = imgui.ImBool(ini.police_guns.stick),
-	m4 = imgui.ImBool(ini.police_guns.m4),
-	mp5 = imgui.ImBool(ini.police_guns.mp5),
-	deagle = imgui.ImBool(ini.police_guns.deagle),
-	rifle = imgui.ImBool(ini.police_guns.rifle),
-	shotgun = imgui.ImBool(ini.police_guns.shotgun)}
+  stick   = imgui.ImBool(false),
+  m4      = imgui.ImBool(false),
+  mp5     = imgui.ImBool(false),
+  deagle  = imgui.ImBool(false),
+  rifle   = imgui.ImBool(false),
+  shotgun = imgui.ImBool(false),
+}
+
 local fbi_guns = {
-	stick = imgui.ImBool(ini.fbi_guns.stick),
-	m4 = imgui.ImBool(ini.fbi_guns.m4),
-	mp5 = imgui.ImBool(ini.fbi_guns.mp5),
-	deagle = imgui.ImBool(ini.fbi_guns.deagle),
-	rifle = imgui.ImBool(ini.fbi_guns.rifle),
-	shotgun = imgui.ImBool(ini.fbi_guns.shotgun),
-	srifle = imgui.ImBool(ini.fbi_guns.srifle),
-	sawed = imgui.ImBool(ini.fbi_guns.sawed),
-	grens = imgui.ImBool(ini.fbi_guns.grens)}
+  stick   = imgui.ImBool(false),
+  m4      = imgui.ImBool(false),
+  mp5     = imgui.ImBool(false),
+  deagle  = imgui.ImBool(false),
+  rifle   = imgui.ImBool(false),
+  shotgun = imgui.ImBool(false),
+  srifle  = imgui.ImBool(false),
+  sawed   = imgui.ImBool(false),
+  grens   = imgui.ImBool(false),
+}
+
 local army_guns = {
-	m4 = imgui.ImBool(ini.army_guns.m4),
-	mp5 = imgui.ImBool(ini.army_guns.mp5),
-	deagle = imgui.ImBool(ini.army_guns.deagle),
-	rifle = imgui.ImBool(ini.army_guns.rifle),
-	shotgun = imgui.ImBool(ini.army_guns.shotgun)}
+  m4      = imgui.ImBool(false),
+  mp5     = imgui.ImBool(false),
+  deagle  = imgui.ImBool(false),
+  rifle   = imgui.ImBool(false),
+  shotgun = imgui.ImBool(false),
+}
+
 local names = {
-	police_items = {
-		armor = "Бронежилет", -- Бронежилет
-		shield = "Полицейский щит", -- Полицейский щит
-		torch = "Фонарик", -- Фонарик
-		bhelmet = "Чёрный шлем SWAT", -- Чёрный шлем SWAT
-		whelmet = "Белый шлем SWAT", -- Белый шлем SWAT
-		mask = "Вязаная маска", -- Вязаная маска
-		bglasses = "Очки «Police Black»", -- Очки «Police Black»
-		rglasses = "Очки «Police Red»", -- Очки «Police Red»
-		blglasses = "Очки «Police Blue»", -- Очки «Police Blue»
-		gmask = "Противогаз", -- Противогаз
-		ccap = "Парадная фуражка", -- Парадная фуражка
-		ocap = "Офицерская фуражка", -- Офицерская фуражка
-		bhh = "Черная полицейская каска", -- Черная полицейская каска
-		blhh = "Синяя полицейская каска", -- Синяя полицейская каска
-		helmet = "Шлем патрульного", -- Шлем патрульного
-		pcap = "Полицейская кепка", -- Полицейская кепка
-		baton = "Жезл регулировщика", -- Жезл регулировщика
-		vest = "Оранжевый жилет", -- Оранжевый жилет
-		brhat = "Черная шляпа шерифа", -- Черная шляпа шерифа
-    bhat = "Коричневая шляпа шерифа" -- Коричневая шляпа шерифа
-	},
-	fbi_items = {
-		armor = "Бронежилет", -- Бронежилет
-		shield = "Полицейский щит", -- Полицейский щит
-		torch = "Фонарик", -- Фонарик
-		bhelmet = "Чёрный шлем SWAT", -- Чёрный шлем SWAT
-		whelmet = "Белый шлем SWAT", -- Белый шлем SWAT
-		mask = "Вязаная маска", -- Вязаная маска
-		bglasses = "Очки «Police Black»", -- Очки «Police Black»
-		rglasses = "Очки «Police Red»", -- Очки «Police Red»
-		blglasses = "Очки «Police Blue»", -- Очки «Police Blue»
-	},
-	army_items = {
-		armor = "Бронежилет", -- Бронежилет
-		ls = "Громкоговоритель", -- Громкоговоритель
-	},
-	guns = {
-		stick = 'Полицейская дубинка',
-		m4 = 'M4', -- M4
-		mp5 = 'MP5', -- MP5
-		shotgun = 'Shotgun', -- Shotgun
-		rifle = 'Rifle', -- Rifle
-		deagle = 'Desert Eagle', -- Desert Eagle
-		srifle = 'Снайперская винтовка', -- Sniper Rifle
-		sawed = 'Обрез', -- Sawed-off shotgun
-		grens = 'Гранаты', -- Grenades
-	}}
+  items = {
+    armor       = 'Бронежилет',
+    shield      = 'Полицейский щит',
+    torch       = 'Фонарик',
+    bhelmet     = 'Чёрный шлем SWAT',
+    whelmet     = 'Белый шлем SWAT',
+    mask        = 'Вязаная маска',
+    bglasses    = 'Очки «Police Black»',
+    rglasses    = 'Очки «Police Red»',
+    blglasses   = 'Очки «Police Blue»',
+    gmask       = 'Противогаз',
+    ccap        = 'Парадная фуражка',
+    ocap        = 'Офицерская фуражка',
+    bhh         = 'Черная полицейская каска',
+    blhh        = 'Синяя полицейская каска',
+    helmet      = 'Шлем патрульного',
+    pcap        = 'Полицейская кепка',
+    baton       = 'Жезл регулировщика',
+    vest        = 'Оранжевый жилет',
+    brhat       = 'Черная шляпа шерифа',
+    bhat        = 'Коричневая шляпа шерифа',
+    nvdevice    = 'Прибор НВ',
+    ls          = 'Громкоговоритель',
+    beretarmy   = 'Берет «Army»',
+    beretkrap   = 'Берет «Krap»',
+    beretdesant = 'Берет «Desant»',
+  },
+
+  guns = {
+    stick   = 'Тайзер',
+    m4      = 'M4',
+    mp5     = 'MP5',
+    shotgun = 'Дробовик',
+    rifle   = 'Винтовка',
+    deagle  = 'Desert Eagle',
+    srifle  = 'Снайперская винтовка',
+    sawed   = 'Обрез',
+    grens   = 'Гранаты',
+  },
+}
+
 local ids = {
-	police_items = {
-		armor = 1, -- Бронежилет
-		shield = 2, -- Полицейский щит
-		torch = 3, -- Фонарик
-		bhelmet = 4, -- Чёрный шлем SWAT
-		whelmet = 5, -- Белый шлем SWAT
-		mask = 6, -- Вязаная маска
-		bglasses = 7, -- Очки «Police Black»
-		rglasses = 8, -- Очки «Police Red»
-		blglasses = 9, -- Очки «Police Blue»
-		gmask = 10, -- Противогаз
-		ccap = 11, -- Парадная фуражка
-		ocap = 12, -- Офицерская фуражка
-		bhh = 13, -- Черная полицейская каска
-		blhh = 14, -- Синяя полицейская каска
-		helmet = 15, -- Шлем патрульного
-		pcap = 16, -- Полицейская кепка
-		baton = 17, -- Жезл регулировщика
-		vest = 18, -- Оранжевый жилет
-		brhat = 19, -- Черная шляпа шерифа
-    bhat = 20 -- Коричневая шляпа шерифа
-	},
-	fbi_items = {
-		armor = 1, -- Бронежилет
-		shield = 2, -- Полицейский щит
-		torch = 3, -- Фонарик
-		bhelmet = 4, -- Чёрный шлем SWAT
-		whelmet = 5, -- Белый шлем SWAT
-		mask = 6, -- Вязаная маска
-		bglasses = 7, -- Очки «Police Black»
-		rglasses = 8, -- Очки «Police Red»
-		blglasses = 9, -- Очки «Police Blue»
-	},
-	army_items = {
-		armor = 0, -- Бронежилет
-		ls = 1, -- Громкоговоритель
-	},
-	police_guns = {
-		stick = 0,
-		m4 = 1, -- M4
-		mp5 = 2, -- MP5
-		deagle = 5, -- Desert Eagle
-		rifle = 4, -- Rifle
-		shotgun = 3, -- Shotgun
-	},
-	fbi_guns = {
-		stick = 0,
-		m4 = 1, -- M4
-		mp5 = 2, -- MP5
-		shotgun = 3, -- Shotgun
-		rifle = 4, -- Rifle
-		deagle = 5, -- Desert Eagle
-		srifle = 6, -- Sniper Rifle
-		sawed = 7, -- Sawed-off shotgun
-		grens = 8, -- Grenades
-	},
-	army_guns = {
-		m4 = 0, -- M4
-		mp5 = 1, -- MP5
-		deagle = 2, -- Desert Eagle
-		rifle = 3, -- Rifle
-		shotgun = 4, -- Shotgun
-	}}
+  police_items = {
+    armor     = 1, -- Бронежилет
+    nvdevice  = 2, -- Прибор ночного видения
+    shield    = 3, -- Полицейский щит
+    torch     = 4, -- Фонарик
+    bhelmet   = 5, -- Чёрный шлем SWAT
+    whelmet   = 6, -- Белый шлем SWAT
+    mask      = 7, -- Вязаная маска
+    bglasses  = 8, -- Очки «Police Black»
+    rglasses  = 9, -- Очки «Police Red»
+    blglasses = 10, -- Очки «Police Blue»
+    gmask     = 11, -- Противогаз
+    ccap      = 12, -- Парадная фуражка
+    ocap      = 13, -- Офицерская фуражка
+    bhh       = 14, -- Черная полицейская каска
+    blhh      = 15, -- Синяя полицейская каска
+    helmet    = 16, -- Шлем патрульного
+    pcap      = 17, -- Полицейская кепка
+    baton     = 18, -- Жезл регулировщика
+    vest      = 19, -- Оранжевый жилет
+    brhat     = 20, -- Черная шляпа шерифа
+    bhat      = 21, -- Коричневая шляпа шерифа
+  },
+
+  fbi_items = {
+    armor     = 1, -- Бронежилет
+    nvdevice  = 2, -- Прибор ночного видения
+    shield    = 3, -- Полицейский щит
+    torch     = 4, -- Фонарик
+    bhelmet   = 5, -- Чёрный шлем SWAT
+    whelmet   = 6, -- Белый шлем SWAT
+    mask      = 7, -- Вязаная маска
+    bglasses  = 8, -- Очки «Police Black»
+    rglasses  = 9, -- Очки «Police Red»
+    blglasses = 10, -- Очки «Police Blue»
+    gmask     = 11, -- Противогаз
+  },
+
+  army_items = {
+    armor       = 0, -- Бронежилет
+    nvdevice    = 1, -- Прибор ночного видения
+    ls          = 2, -- Громкоговоритель
+    beretarmy   = 3, -- Берет «Army»
+    beretkrap   = 4, -- Берет «Krap»
+    beretdesant = 5, -- Берет «Desant»
+  },
+
+  police_guns = {
+    stick   = 0, -- Tazer
+    m4      = 1, -- M4
+    mp5     = 2, -- MP5
+    deagle  = 5, -- Desert Eagle
+    rifle   = 4, -- Rifle
+    shotgun = 3, -- Shotgun
+  },
+
+  fbi_guns = {
+    stick   = 0, -- Tazer
+    m4      = 1, -- M4
+    mp5     = 2, -- MP5
+    shotgun = 3, -- Shotgun
+    rifle   = 4, -- Rifle
+    deagle  = 5, -- Desert Eagle
+    srifle  = 6, -- Sniper Rifle
+    sawed   = 7, -- Sawed-off shotgun
+    grens   = 8, -- Grenades
+  },
+
+  army_guns = {
+    m4      = 0, -- M4
+    mp5     = 1, -- MP5
+    deagle  = 2, -- Desert Eagle
+    rifle   = 3, -- Rifle
+    shotgun = 4, -- Shotgun
+  }
+}
+
 function imgui.OnDrawFrame()
-  if settings_window_state.v then
-		imgui.Begin("AutoTaker", settings_window_state, 66)
-		if imgui.CollapsingHeader("Тип работы скрипта") then
-			if imgui.ListBox("", typescriptwork, {"Police", "FBI", "Army"}, imgui.ImInt(3)) then
-				ini.settings.typescriptwork = typescriptwork.v
-				inicfg.save(ini, "autotaker")
-			end
-			imgui.Separator()
-		end
-		if imgui.CollapsingHeader("Список предметов") then
-			if typescriptwork.v == 0 then
-					if imgui.Checkbox(names['police_items']['armor'], police_items['armor']) then
-						ini.police_items.armor = police_items['armor'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['shield'], police_items['shield']) then
-						ini.police_items.shield = police_items['shield'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['torch'], police_items['torch']) then
-						ini.police_items.torch = police_items['torch'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['bhelmet'], police_items['bhelmet']) then
-						ini.police_items.bhelmet = police_items['bhelmet'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['whelmet'], police_items['whelmet']) then
-						ini.police_items.whelmet = police_items['whelmet'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['mask'], police_items['mask']) then
-						ini.police_items.mask = police_items['mask'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['bglasses'], police_items['bglasses']) then
-						ini.police_items.bglasses = police_items['bglasses'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['rglasses'], police_items['rglasses']) then
-						ini.police_items.rglasses = police_items['rglasses'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['blglasses'], police_items['blglasses']) then
-						ini.police_items.blglasses = police_items['blglasses'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['ccap'], police_items['ccap']) then
-						ini.police_items.ccap = police_items['ccap'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['ocap'], police_items['ocap']) then
-						ini.police_items.ocap = police_items['ocap'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['bhh'], police_items['bhh']) then
-						ini.police_items.bhh = police_items['bhh'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['blhh'], police_items['blhh']) then
-						ini.police_items.blhh = police_items['blhh'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['gmask'], police_items['gmask']) then
-						ini.police_items.gmask = police_items['gmask'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['helmet'], police_items['helmet']) then
-						ini.police_items.helmet = police_items['helmet'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['pcap'], police_items['pcap']) then
-						ini.police_items.pcap = police_items['pcap'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['baton'], police_items['baton']) then
-						ini.police_items.baton = police_items['baton'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['vest'], police_items['vest']) then
-						ini.police_items.vest = police_items['vest'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['brhat'], police_items['brhat']) then
-						ini.police_items.brhat = police_items['brhat'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['police_items']['bhat'], police_items['bhat']) then
-						ini.police_items.bhat = police_items['bhat'].v
-						inicfg.save(ini, "autotaker")
-					end
-			end
-			if typescriptwork.v == 1 then
-				if imgui.Checkbox(names['fbi_items']['armor'], fbi_items['armor']) then
-					ini.fbi_items.armor = fbi_items['armor'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['fbi_items']['shield'], fbi_items['shield']) then
-					ini.fbi_items.shield = fbi_items['shield'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['fbi_items']['torch'], fbi_items['torch']) then
-					ini.fbi_items.torch = fbi_items['torch'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['fbi_items']['bhelmet'], fbi_items['bhelmet']) then
-					ini.fbi_items.bhelmet = fbi_items['bhelmet'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['fbi_items']['whelmet'], fbi_items['whelmet']) then
-					ini.fbi_items.whelmet = fbi_items['whelmet'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['fbi_items']['mask'], fbi_items['mask']) then
-					ini.fbi_items.mask = fbi_items['mask'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['fbi_items']['bglasses'], fbi_items['bglasses']) then
-					ini.fbi_items.bglasses = fbi_items['bglasses'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['fbi_items']['rglasses'], fbi_items['rglasses']) then
-					ini.fbi_items.rglasses = fbi_items['rglasses'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['fbi_items']['blglasses'], fbi_items['blglasses']) then
-					ini.fbi_items.blglasses = fbi_items['blglasses'].v
-					inicfg.save(ini, "autotaker")
-				end
-			end
-			if typescriptwork.v == 2 then
-				if imgui.Checkbox(names['army_items']['armor'], army_items['armor']) then
-					ini.army_items.armor = army_items['armor'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['army_items']['ls'], army_items['ls']) then
-					ini.army_items.ls = army_items['ls'].v
-					inicfg.save(ini, "autotaker")
-				end
-			end
-			imgui.Separator()
-		end
-		if imgui.CollapsingHeader("Список оружия") then
-			if typescriptwork.v == 0 then
-					if imgui.Checkbox(names['guns']['stick'], police_guns['stick']) then
-						ini.police_guns.stick = police_guns['stick'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['guns']['m4'], police_guns['m4']) then
-						ini.police_guns.m4 = police_guns['m4'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['guns']['mp5'], police_guns['mp5']) then
-						ini.police_guns.mp5 = police_guns['mp5'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['guns']['shotgun'], police_guns['shotgun']) then
-						ini.police_guns.shotgun = police_guns['shotgun'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['guns']['rifle'], police_guns['rifle']) then
-						ini.police_guns.rifle = police_guns['rifle'].v
-						inicfg.save(ini, "autotaker")
-					end
-					if imgui.Checkbox(names['guns']['deagle'], police_guns['deagle']) then
-						ini.police_guns.deagle = police_guns['deagle'].v
-						inicfg.save(ini, "autotaker")
-					end
-			end
-			if typescriptwork.v == 1 then
-				if imgui.Checkbox(names['guns']['stick'], fbi_guns['stick']) then
-					ini.fbi_guns.stick = fbi_guns['stick'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['m4'], fbi_guns['m4']) then
-					ini.fbi_guns.m4 = fbi_guns['m4'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['mp5'], fbi_guns['mp5']) then
-					ini.fbi_guns.mp5 = fbi_guns['mp5'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['deagle'], fbi_guns['deagle']) then
-					ini.fbi_guns.deagle = fbi_guns['deagle'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['rifle'], fbi_guns['rifle']) then
-					ini.fbi_guns.rifle = fbi_guns['rifle'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['shotgun'], fbi_guns['shotgun']) then
-					ini.fbi_guns.shotgun = fbi_guns['shotgun'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['srifle'], fbi_guns['srifle']) then
-					ini.fbi_guns.srifle = fbi_guns['srifle'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['sawed'], fbi_guns['sawed']) then
-					ini.fbi_guns.sawed = fbi_guns['sawed'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['grens'], fbi_guns['grens']) then
-					ini.fbi_guns.grens = fbi_guns['grens'].v
-					inicfg.save(ini, "autotaker")
-				end
-			end
-			if typescriptwork.v == 2 then
-				if imgui.Checkbox(names['guns']['m4'], army_guns['m4']) then
-					ini.army_guns.m4 = army_guns['m4'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['mp5'], army_guns['mp5']) then
-					ini.army_guns.mp5 = army_guns['mp5'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['deagle'], army_guns['deagle']) then
-					ini.army_guns.deagle = army_guns['deagle'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['rifle'], army_guns['rifle']) then
-					ini.army_guns.rifle = army_guns['rifle'].v
-					inicfg.save(ini, "autotaker")
-				end
-				if imgui.Checkbox(names['guns']['shotgun'], army_guns['shotgun']) then
-					ini.army_guns.shotgun = army_guns['shotgun'].v
-					inicfg.save(ini, "autotaker")
-				end
-			end
-			imgui.Separator()
-		end
-		if imgui.Checkbox("Активно?", active) then
-			ini.settings.active = active.v
-			inicfg.save(ini, "autotaker")
-		end
-		imgui.End()
+  if mainWindowState.v then
+    local resX, resY = getScreenResolution()
+    imgui.SetNextWindowSize(imgui.ImVec2(576, 350), 2)
+    imgui.SetNextWindowPos(imgui.ImVec2(resX/2, resY/2), 2, imgui.ImVec2(0.5, 0.5))
+    imgui.Begin('Autotaker v'..thisScript()['version'], mainWindowState, imgui.WindowFlags.NoResize)
+    if imgui.CollapsingHeader('Тип работы скрипта') then
+      if imgui.ListBox('', typescriptwork, {'Police', 'FBI', 'Army'}, imgui.ImInt(3)) then
+        data['settings']['typescriptwork'] = typescriptwork.v
+        saveData()
+      end
+      imgui.Separator()
+    end
+    if imgui.CollapsingHeader('Список предметов') then
+
+      if typescriptwork.v == 0 then
+        for k, v in pairs(police_items) do
+          if imgui.Checkbox(names['items'][k], v) then
+            data['police_items'][k] = police_items[k].v
+            saveData()
+          end
+        end
+      end
+
+      if typescriptwork.v == 1 then
+        for k, v in pairs(fbi_items) do
+          if imgui.Checkbox(names['items'][k], v) then
+            data['fbi_items'][k] = fbi_items[k].v
+            saveData()
+          end
+        end
+      end
+
+      if typescriptwork.v == 2 then
+        for k, v in pairs(army_items) do
+          if imgui.Checkbox(names['items'][k], v) then
+            data['army_items'][k] = army_items[k].v
+            saveData()
+          end
+        end
+      end
+
+      imgui.Separator()
+    end
+    if imgui.CollapsingHeader('Список оружия') then
+
+      if typescriptwork.v == 0 then
+        for k, v in pairs(police_guns) do
+          if imgui.Checkbox(names['guns'][k], v) then
+            data['police_guns'][k] = police_guns[k].v
+            saveData()
+          end
+        end
+      end
+
+      if typescriptwork.v == 1 then
+        for k, v in pairs(fbi_guns) do
+          if imgui.Checkbox(names['guns'][k], v) then
+            data['fbi_guns'][k] = fbi_guns[k].v
+            saveData()
+          end
+        end
+      end
+
+      if typescriptwork.v == 2 then
+        for k, v in pairs(army_guns) do
+          if imgui.Checkbox(names['guns'][k], v) then
+            data['army_guns'][k] = army_guns[k].v
+            saveData()
+          end
+        end
+      end
+
+      imgui.Separator()
+    end
+    if imgui.Checkbox('Активно?', active) then
+      data['settings']['active'] = active.v
+      saveData()
+    end
+    if updatesAvaliable and imgui.Button('Скачать обновление', imgui.ImVec2(150, 0)) then
+      update('https://raw.githubusercontent.com/Akionka/autotaker/master/autotaker.lua')
+      mainWindowState.v = false
+    end
+    if not updatesAvaliable and imgui.Button('Проверить обновления', imgui.ImVec2(150, 0)) then
+      checkUpdates('https://raw.githubusercontent.com/Akionka/autotaker/master/version.json')
+    end
+    imgui.SameLine()
+    if imgui.Button('Группа ВКонтакте', imgui.ImVec2(150, 0)) then os.execute('explorer "https://vk.com/akionkamods"') end
+    if imgui.Button('Bug report [VK]', imgui.ImVec2(150, 0)) then os.execute('explorer "https://vk.com/akionka"') end
+    imgui.SameLine()
+    if imgui.Button('Bug report [Telegram]', imgui.ImVec2(150, 0)) then os.execute('explorer "https://teleg.run/akionka"') end
+    imgui.End()
   end
 end
 
 function get_pickup_model(id, handle)
-  local stPickup = sampGetPickupPoolPtr()
-  local handle = id * 20
-  local result = handle + 61444
-  local result = result + stPickup
-  local modelid = readMemory(result, 4, true)
-  return modelid
+  return readMemory(id * 20 + 61444 + sampGetPickupPoolPtr(), 4, true)
 end
 
 function sampev.onSendPickedUpPickup(id)
-	local pickup = sampGetPickupHandleBySampId(id)
-	local pickuppoolPtr = sampGetPickupPoolPtr(id)
-	if get_pickup_model(id, pickup) == 1242 then
-		if locked then return false end
-		if #order == 0 then
-			if ini.settings.typescriptwork == 0 then
-				for k, v in pairs(ini.police_items) do
-					if v then
-						table.insert(order, ids['police_items'][k])
-					end
-				end
-			end
-			if ini.settings.typescriptwork == 1 then
-				for k, v in pairs(ini.fbi_items) do
-					if v then
-						table.insert(order, ids['fbi_items'][k])
-					end
-				end
-			end
-			if ini.settings.typescriptwork == 2 then
-				for k, v in pairs(ini.army_items) do
-					if v then
-						table.insert(order, ids['army_items'][k])
-					end
-				end
-			end
-		end
-	end
-	if get_pickup_model(id, pickup) == 2061 then
-		if #order == 0 then
-			if ini.settings.typescriptwork == 0 then
-				for k, v in pairs(ini.police_guns) do
-					if v then
-						table.insert(order, ids['police_guns'][k])
-					end
-				end
-			end
-			if ini.settings.typescriptwork == 1 then
-				for k, v in pairs(ini.fbi_guns) do
-					if v then
-						table.insert(order, ids['fbi_guns'][k])
-					end
-				end
-			end
-			if ini.settings.typescriptwork == 2 then
-				for k, v in pairs(ini.army_guns) do
-					if v then
-						table.insert(order, ids['army_guns'][k])
-					end
-				end
-			end
-		end
-	end
+  local pickup = sampGetPickupHandleBySampId(id)
+  local pickuppoolPtr = sampGetPickupPoolPtr(id)
+
+
+  -- Доп. снаряжение
+  if get_pickup_model(id, pickup) == 1242 then
+    if locked then return false end
+    if #orderList == 0 then
+      if data['settings']['typescriptwork'] == 0 then
+        for k, v in pairs(data['police_items']) do
+          if v then
+            table.insert(orderList, ids['police_items'][k])
+          end
+        end
+      end
+      if data['settings']['typescriptwork'] == 1 then
+        for k, v in pairs(data['fbi_items']) do
+          if v then
+            table.insert(orderList, ids['fbi_items'][k])
+          end
+        end
+      end
+      if data['settings']['typescriptwork'] == 2 then
+        for k, v in pairs(data['army_items']) do
+          if v then
+            table.insert(orderList, ids['army_items'][k])
+          end
+        end
+      end
+    end
+  end
+
+  -- Оружейная
+  if get_pickup_model(id, pickup) == 2061 then
+    if #orderList == 0 then
+      if data['settings']['typescriptwork'] == 0 then
+        for k, v in pairs(data['police_guns']) do
+          if v then
+            table.insert(orderList, ids['police_guns'][k])
+          end
+        end
+      end
+      if data['settings']['typescriptwork'] == 1 then
+        for k, v in pairs(data['fbi_guns']) do
+          if v then
+            table.insert(orderList, ids['fbi_guns'][k])
+          end
+        end
+      end
+      if data['settings']['typescriptwork'] == 2 then
+        for k, v in pairs(data['army_guns']) do
+          if v then
+            table.insert(orderList, ids['army_guns'][k])
+          end
+        end
+      end
+    end
+  end
 end
 
 function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
-	if (id == 81 or id == 83) and ini.settings.active then
-		if #order == 0 then
-			locked = true
-			sampAddChatMessage(u8:decode("[AutoTaker]: Можете отходить от пикапа. В теченее следующих {2980b9}6 секунд{FFFFFF} он будет неактивен."), -1)
-			lua_thread.create(function()
-				wait(6000)
-				locked = false
-			end)
-			sampSendDialogResponse(id, 0, 0, "")
-			return false
-	 	end
-		for k, v in pairs(order) do
-			if v then
-				close_next = true
-				sampSendDialogResponse(id, 1, order[1], "")
-				return false
-			end
-		end
-	end
-	if (id == 82 or id == 45) and close_next then
-		table.remove(order, 1)
-		close_next = false
-		sampSendDialogResponse(id, 1, 0, "")
-		return false
-	end
-	if (id == 76 or id == 77 or id == 78) and ini.settings.active then
-		for k, v in pairs(order) do
-			if v then
-				sampSendDialogResponse(id, 1, order[1], "")
-				table.remove(order, 1)
-				return false
-			end
-		end
-	end
+  alert(id..'|'..u8:encode(title))
+
+  if (id == 81 or id == 83) and data['settings']['active'] then
+    if #orderList == 0 then
+      locked = true
+      alert('Можете отходить от пикапа. В теченее следующих {9932cc}6 секунд{FFFFFF} он будет неактивен')
+      lua_thread.create(function()
+        wait(6000)
+        locked = false
+      end)
+      sampSendDialogResponse(id, 0, 0, '')
+      return false
+    end
+    for k, v in pairs(orderList) do
+      if v then
+        close_next = true
+        print(orderList[1])
+        sampSendDialogResponse(id, 1, orderList[1], '')
+        return false
+      end
+    end
+  end
+
+
+  if (id == 82 or id == 45) and close_next then
+    table.remove(orderList, 1)
+    close_next = false
+    sampSendDialogResponse(id, 1, 0, '')
+    return false
+  end
+
+  -- Оружейная
+  if (id == 76 or id == 77 or id == 78) and data['settings']['active'] then
+    for k, v in pairs(orderList) do
+      if v then
+        sampSendDialogResponse(id, 1, orderList[1], '')
+        table.remove(orderList, 1)
+        return false
+      end
+    end
+  end
+end
+
+function sampev.onSendDialogResponse(id, btn, list, text)
+  print(id, btn, list, text)
+end
+
+function applyCustomStyle()
+  imgui.SwitchContext()
+  local style  = imgui.GetStyle()
+  local colors = style.Colors
+  local clr    = imgui.Col
+  local ImVec4 = imgui.ImVec4
+
+  style.WindowRounding      = 0.0
+  style.WindowTitleAlign    = imgui.ImVec2(0.5, 0.5)
+  style.ChildWindowRounding = 0.0
+  style.FrameRounding       = 0.0
+  style.ItemSpacing         = imgui.ImVec2(5.0, 5.0)
+  style.ScrollbarSize       = 13.0
+  style.ScrollbarRounding   = 0
+  style.GrabMinSize         = 8.0
+  style.GrabRounding        = 0.0
+
+  colors[clr.FrameBg]             = ImVec4(0.00, 0.00, 0.00, 0.00)
+  colors[clr.FrameBgHovered]      = ImVec4(0.00, 0.00, 0.00, 0.00)
+  colors[clr.FrameBgActive]       = ImVec4(0.00, 0.00, 0.00, 0.00)
+  colors[clr.TitleBg]             = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.TitleBgActive]       = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.TitleBgCollapsed]    = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.CheckMark]           = ImVec4(0.60, 0.20, 0.80, 1.00)
+  -- colors[clr.SliderGrab]       = ImVec4(0.60, 0.20, 0.80, 1.00)
+  -- colors[clr.SliderGrabActive] = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.Button]              = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.ButtonHovered]       = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.ButtonActive]        = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.Header]              = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.HeaderHovered]       = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.HeaderActive]        = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.Separator]           = colors[clr.Border]
+  colors[clr.SeparatorHovered]    = ImVec4(0.75, 0.10, 0.10, 0.78)
+  colors[clr.SeparatorActive]     = ImVec4(0.75, 0.10, 0.10, 1.00)
+  colors[clr.ResizeGrip]          = ImVec4(0.15, 0.68, 0.38, 1.00)
+  colors[clr.ResizeGripHovered]   = ImVec4(0.15, 0.68, 0.38, 1.00)
+  colors[clr.ResizeGripActive]    = ImVec4(0.15, 0.68, 0.38, 0.95)
+  colors[clr.TextSelectedBg]      = ImVec4(0.98, 0.26, 0.26, 0.35)
+  colors[clr.Text]                = ImVec4(1.00, 1.00, 1.00, 1.00)
+  colors[clr.TextDisabled]        = ImVec4(0.50, 0.50, 0.50, 1.00)
+  colors[clr.WindowBg]            = ImVec4(0.13, 0.13, 0.13, 1.00)
+  colors[clr.ChildWindowBg]       = ImVec4(0.13, 0.13, 0.13, 1.00)
+  colors[clr.PopupBg]             = ImVec4(0.13, 0.13, 0.13, 1.00)
+  colors[clr.ComboBg]             = colors[clr.PopupBg]
+  colors[clr.Border]              = ImVec4(0.43, 0.43, 0.50, 0.00)
+  colors[clr.BorderShadow]        = ImVec4(0.00, 0.00, 0.00, 0.00)
+  colors[clr.CloseButton]         = ImVec4(0.60, 0.20, 0.80, 0.50)
+  colors[clr.CloseButtonHovered]  = ImVec4(0.60, 0.20, 0.80, 0.50)
+  colors[clr.CloseButtonActive]   = ImVec4(0.60, 0.20, 0.80, 0.50)
 end
 
 function main()
   if not isSampfuncsLoaded() or not isSampLoaded() then return end
   while not isSampAvailable() do wait(0) end
-	sampAddChatMessage(u8:decode("[AutoTaker]: Скрипт {00FF00}успешно{FFFFFF} загружен. Версия: {2980b9}"..thisScript().version.."{FFFFFF}. Автор - {2980b9}Akionka{FFFFFF}."), -1)
+  if doesDirectoryExist(getWorkingDirectory()..'\\config') then createDirectory(getWorkingDirectory()..'\\config') end
 
-	update()
-	while updateinprogess ~= false do wait(0) if isGoUpdate then isGoUpdate = false goupdate() end end
+  applyCustomStyle()
+  loadData()
 
-	sampRegisterChatCommand('autotaker', function() settings_window_state.v = not settings_window_state.v end)
-	while true do
-		wait(0)
-		if isGoUpdate then goupdate() break end
-		imgui.Process = settings_window_state.v
-	end
+  print(u8:decode('{FFFFFF}Скрипт успешно загружен.'))
+  print(u8:decode('{FFFFFF}Версия: {9932cc}'..thisScript()['version']..'{FFFFFF}. Автор: {9932cc}Akionka{FFFFFF}.'))
+  print(u8:decode('{FFFFFF}Приятного использования! :)'))
+
+  if data['settings']['alwaysAutoCheckUpdates'] then
+    checkUpdates('https://raw.githubusercontent.com/Akionka/autotaker/master/version.json')
+  end
+
+  sampRegisterChatCommand('autotaker', function()
+    mainWindowState.v = not mainWindowState.v
+  end)
+
+  while true do
+    wait(0)
+    imgui.Process = mainWindowState.v
+  end
 end
 
-function update()
-	local fpath = os.getenv('TEMP') .. '\\autotaker-version.json'
-	downloadUrlToFile('https://raw.githubusercontent.com/Akionka/autotaker/master/version.json', fpath, function(id, status, p1, p2)
-		if status == dlstatus.STATUS_ENDDOWNLOADDATA then
-			local f = io.open(fpath, 'r')
-			if f then
-				local info = decodeJson(f:read('*a'))
-				if info and info.version then
-					version = info.version
-					version_num = info.version_num
-					if version_num > thisScript().version_num then
-						sampAddChatMessage(u8:decode("[AutoTaker]: Найдено объявление. Текущая версия: {2980b9}"..thisScript().version.."{FFFFFF}, новая версия: {2980b9}"..version.."{FFFFFF}. Начинаю закачку."), -1)
-						isGoUpdate = true
-					else
-						sampAddChatMessage(u8:decode("[AutoTaker]: У вас установлена самая свежая версия скрипта."), -1)
-						updateinprogess = false
-					end
-				end
-			end
-		end
-	end)
+function checkUpdates(json)
+  local fpath = os.tmpname()
+  if doesFileExist(fpath) then os.remove(fpath) end
+  downloadUrlToFile(json, fpath, function(_, status, _, _)
+    if status == 58 then
+      if doesFileExist(fpath) then
+        local f = io.open(fpath, 'r')
+        if f then
+          local info = decodeJson(f: read('*a'))
+          f:close()
+          os.remove(fpath)
+          if info['version_num'] > thisScript()['version_num'] then
+            updatesAvaliable = true
+            alert('Найдено объявление. Текущая версия: {9932cc}'..thisScript()['version']..'{FFFFFF}, новая версия: {9932cc}'..info['version']..'{FFFFFF}')
+            return true
+          else
+            updatesAvaliable = false
+            alert('У вас установлена самая свежая версия скрипта')
+          end
+        else
+          updatesAvaliable = false
+          alert('Что-то пошло не так, упс. Попробуйте позже')
+        end
+      end
+    end
+  end)
 end
-function goupdate()
-	downloadUrlToFile("https://raw.githubusercontent.com/Akionka/autotaker/master/autotaker.lua", thisScript().path, function(id3, status1, p13, p23)
-		if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-			sampAddChatMessage(u8:decode('[AutoTaker]: Новая версия установлена! Чтобы скрипт обновился нужно либо перезайти в игру, либо ...'), -1)
-			sampAddChatMessage(u8:decode('[AutoTaker]: ... если у вас есть автоперезагрузка скриптов, то новая версия уже готова и снизу вы увидите приветственное сообщение.'), -1)
-			sampAddChatMessage(u8:decode('[AutoTaker]: Скорее всего прямо сейчас у вас сломался курсор. Введите {2980b9}/autotaker{FFFFFF}.'), -1)
-			sampAddChatMessage(u8:decode('[AutoTaker]: Если что-то пошло не так, то сообщите мне об этом в VK или Telegram > {2980b0}vk.com/akionka teleg.run/akionka{FFFFFF}.'), -1)
-			updateinprogess = false
-		end
-	end)
+
+function update(url)
+  downloadUrlToFile(url, thisScript().path, function(_, status, _, _)
+    if status == 6 then
+      alert('Новая версия установлена! Чтобы скрипт обновился нужно либо перезайти в игру, либо ...')
+      alert('... если у вас есть автоперезагрузка скриптов, то новая версия уже готова и снизу вы увидите приветственное сообщение')
+      alert('Если что-то пошло не так, то сообщите мне об этом в VK или Telegram > {2980b0}vk.com/akionka teleg.run/akionka{FFFFFF}')
+      thisScript():reload()
+    end
+  end)
+end
+
+function loadData()
+  if not doesFileExist(getWorkingDirectory()..'\\config\\autotaker.json') then
+    local configFile = io.open(getWorkingDirectory()..'\\config\\autotaker.json', 'w+')
+    configFile:write(encodeJson(data))
+    configFile:close()
+    return
+  end
+
+  local configFile = io.open(getWorkingDirectory()..'\\config\\autotaker.json', 'r')
+  data = decodeJson(configFile:read('*a'))
+  configFile:close()
+
+  active.v          = data['settings']['active'] or false
+  typescriptwork.v  = data['settings']['typescriptwork'] or 0
+
+  for k, v in pairs(police_items) do
+    police_items[k].v = data['police_items'][k] or false
+  end
+
+  for k, v in pairs(fbi_items) do
+    fbi_items[k].v = data['fbi_items'][k] or false
+  end
+
+  for k, v in pairs(army_items) do
+    army_items[k].v = data['army_items'][k] or false
+  end
+
+  for k, v in pairs(police_guns) do
+    police_guns[k].v = data['police_guns'][k] or false
+  end
+
+  for k, v in pairs(fbi_guns) do
+    fbi_guns[k].v = data['fbi_guns'][k] or false
+  end
+
+  for k, v in pairs(army_guns) do
+    army_guns[k].v = data['army_guns'][k] or false
+  end
+end
+
+function saveData()
+  local configFile = io.open(getWorkingDirectory()..'\\config\\autotaker.json', 'w+')
+  configFile:write(encodeJson(data))
+  configFile:close()
+end
+
+function alert(text)
+  sampAddChatMessage(u8:decode('['..prefix..']: '..text), -1)
 end
