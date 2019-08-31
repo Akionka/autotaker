@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.5.0')
-script_version_number(9)
+script_version('1.5.1')
+script_version_number(10)
 script_moonloader(27)
 
 require 'deps' {
@@ -231,12 +231,30 @@ function imgui.OnDrawFrame()
       imgui.BeginGroup()
         imgui.BeginChild('Profiles', imgui.ImVec2(145, -imgui.GetItemsLineHeightWithSpacing() * 4 - 5), true)
           for i, v in ipairs(data['profiles']) do
-            if imgui.Selectable(data['profiles'][i]['title']..'##'..i, selectedProfile == i) then
+            if imgui.Selectable(data['profiles'][i]['title']..'##'..i, selectedProfile == i, imgui.SelectableFlags.AllowDoubleClick) then
               selectedProfile = i
+              if imgui.IsMouseDoubleClicked(0) then
+                tempBuffers['title'] = imgui.ImBuffer(data['profiles'][selectedProfile]['title'], 32)
+                imgui.OpenPopup('Изменить настройки профиля##'..i)
+              end
               data['settings']['selectedProfile'] = i
               typescriptwork.v = data['profiles'][selectedProfile]['typescriptwork']
               saveData()
             end
+            if imgui.BeginPopupModal('Изменить настройки профиля##'..i, nil, 64) then
+              imgui.InputText('Название', tempBuffers['title'])
+              imgui.Separator()
+              imgui.SetCursorPosX((imgui.GetWindowWidth() - 240 + imgui.GetStyle().ItemSpacing.x) / 2)
+              if imgui.Button('Готово', imgui.ImVec2(120, 0)) then
+                data['profiles'][selectedProfile]          = data['profiles'][selectedProfile]
+                data['profiles'][selectedProfile]['title'] = tempBuffers['title'].v
+                saveData()
+                imgui.CloseCurrentPopup()
+              end
+              imgui.SameLine()
+              if imgui.Button('Отмена', imgui.ImVec2(120, 0)) then imgui.CloseCurrentPopup() end
+                imgui.EndPopup()
+              end
           end
         imgui.EndChild()
         if imgui.Button('Добавить', imgui.ImVec2(145/2-5, 0)) then
