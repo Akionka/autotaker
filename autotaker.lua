@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.4.0')
-script_version_number(6)
+script_version('1.4.1')
+script_version_number(7)
 script_moonloader(27)
 
 require 'deps' {
@@ -166,6 +166,7 @@ local police_guns = {
   deagle  = imgui.ImBool(false),
   rifle   = imgui.ImBool(false),
   shotgun = imgui.ImBool(false),
+  tearg   = imgui.ImBool(false),
 }
 
 local fbi_guns = {
@@ -178,6 +179,7 @@ local fbi_guns = {
   srifle  = imgui.ImBool(false),
   sawed   = imgui.ImBool(false),
   grens   = imgui.ImBool(false),
+  tearg   = imgui.ImBool(false),
 }
 
 local army_guns = {
@@ -186,6 +188,7 @@ local army_guns = {
   deagle  = imgui.ImBool(false),
   rifle   = imgui.ImBool(false),
   shotgun = imgui.ImBool(false),
+  tearg   = imgui.ImBool(false),
 }
 
 local names = {
@@ -227,6 +230,7 @@ local names = {
     srifle  = 'Снайперская винтовка',
     sawed   = 'Обрез',
     grens   = 'Гранаты',
+    tearg   = 'Дымовая шашка'
   },
 }
 
@@ -285,6 +289,7 @@ local ids = {
     deagle  = 5, -- Desert Eagle
     rifle   = 4, -- Rifle
     shotgun = 3, -- Shotgun
+    tearg   = 6, -- Дымовая шашка
   },
 
   fbi_guns = {
@@ -297,6 +302,7 @@ local ids = {
     srifle  = 6, -- Sniper Rifle
     sawed   = 7, -- Sawed-off shotgun
     grens   = 8, -- Grenades
+    tearg   = 9, -- Дымовая шашка
   },
 
   army_guns = {
@@ -305,6 +311,7 @@ local ids = {
     deagle  = 2, -- Desert Eagle
     rifle   = 3, -- Rifle
     shotgun = 4, -- Shotgun
+    tearg   = 5, -- Дымовая шашка
   }
 }
 
