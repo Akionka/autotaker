@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.4.2')
-script_version_number(8)
+script_version('1.5.0')
+script_version_number(9)
 script_moonloader(27)
 
 require 'deps' {
@@ -20,22 +20,19 @@ encoding.default       = 'cp1251'
 local u8               = encoding.UTF8
 
 local prefix           = 'Autotaker'
-local close_next = false
-local orderList      = {}
-local locked     = false
-encoding.default = 'cp1251'
+local close_next       = false
+local orderList        = {}
+local locked           = false
+encoding.default       = 'cp1251'
 u8 = encoding.UTF8
 
-local data = {
-  settings = {
-    typescriptwork         = 0, --[[
-      0 - PD,
-      1 - FBI,
-      2 - Army
-    ]]
-    active                 = false,
-    alwaysAutoCheckUpdates = false,
-  },
+local defaultProfile = {
+  title = 'Profile1',
+  typescriptwork = 0, --[[
+    0 - PD,
+    1 - FBI,
+    2 - Army
+  ]]
 
   police_items = {
     false, -- Бронежилет
@@ -115,88 +112,23 @@ local data = {
   },
 }
 
+local data = {
+  settings = {
+    active                 = false,
+    alwaysAutoCheckUpdates = true,
+    selectedProfile        = 1,
+  },
+  profiles = {
+    defaultProfile,
+  },
+}
+
 local mainWindowState = imgui.ImBool(false)
 local active          = imgui.ImBool(false)
 local typescriptwork  = imgui.ImInt(0)
-
-local police_items = {
-  imgui.ImBool(false), -- Бронежилет
-  imgui.ImBool(false), -- Прибор ночного видения
-  imgui.ImBool(false), -- Полицейский щит
-  imgui.ImBool(false), -- Фонарик
-  imgui.ImBool(false), -- Чёрный шлем SWAT
-  imgui.ImBool(false), -- Белый шлем SWAT
-  imgui.ImBool(false), -- Вязаная маска
-  imgui.ImBool(false), -- Очки «Police Black»
-  imgui.ImBool(false), -- Очки «Police Red»
-  imgui.ImBool(false), -- Очки «Police Blue»
-  imgui.ImBool(false), -- Противогаз
-  imgui.ImBool(false), -- Парадная фуражка
-  imgui.ImBool(false), -- Офицерская фуражка
-  imgui.ImBool(false), -- Черная полицейская каска
-  imgui.ImBool(false), -- Синяя полицейская каска
-  imgui.ImBool(false), -- Шлем патрульного
-  imgui.ImBool(false), -- Полицейская кепка
-  imgui.ImBool(false), -- Жезл регулировщика
-  imgui.ImBool(false), -- Оранжевый жилет
-  imgui.ImBool(false), -- Черная шляпа шерифа
-  imgui.ImBool(false), -- Коричневая шляпа шерифа
-}
-
-local fbi_items = {
-  imgui.ImBool(false), -- Бронежилет
-  imgui.ImBool(false), -- Прибор ночного видения
-  imgui.ImBool(false), -- Полицейский щит
-  imgui.ImBool(false), -- Фонарик
-  imgui.ImBool(false), -- Чёрный шлем SWAT
-  imgui.ImBool(false), -- Белый шлем SWAT
-  imgui.ImBool(false), -- Вязаная маска
-  imgui.ImBool(false), -- Очки «Police Black»
-  imgui.ImBool(false), -- Очки «Police Red»
-  imgui.ImBool(false), -- Очки «Police Blue»
-  imgui.ImBool(false), -- Противогаз
-}
-
-local army_items = {
-  imgui.ImBool(false), -- Бронежилет
-  imgui.ImBool(false), -- Прибор ночного видения
-  imgui.ImBool(false), -- Громкоговоритель
-  imgui.ImBool(false), -- Берет «Army»
-  imgui.ImBool(false), -- Берет «Krap»
-  imgui.ImBool(false), -- Берет «Desant»
-}
-
-local police_guns = {
-  imgui.ImBool(false), -- Дубинка
-  imgui.ImBool(false), -- M4
-  imgui.ImBool(false), -- MP5
-  imgui.ImBool(false), -- Дробовик
-  imgui.ImBool(false), -- Винтовка
-  imgui.ImBool(false), -- Desert Eagle
-  imgui.ImBool(false), -- Дымовая шашка
-}
-
-local fbi_guns = {
-  imgui.ImBool(false), -- Tazer
-  imgui.ImBool(false), -- M4
-  imgui.ImBool(false), -- MP5
-  imgui.ImBool(false), -- Shotgun
-  imgui.ImBool(false), -- Rifle
-  imgui.ImBool(false), -- Desert Eagle
-  imgui.ImBool(false), -- Sniper Rifle
-  imgui.ImBool(false), -- Sawed-off shotgun
-  imgui.ImBool(false), -- Grenades
-  imgui.ImBool(false), -- Дымовая шашка
-}
-
-local army_guns = {
-  imgui.ImBool(false), -- M4
-  imgui.ImBool(false), -- MP5
-  imgui.ImBool(false), -- Desert Eagle
-  imgui.ImBool(false), -- Rifle
-  imgui.ImBool(false), -- Shotgun
-  imgui.ImBool(false), -- Дымовая шашка
-}
+local selectedProfile = 1
+local selectedTab     = 1
+local tempBuffers     = {}
 
 local names = {
   police_items = {
@@ -282,94 +214,187 @@ local names = {
 function imgui.OnDrawFrame()
   if mainWindowState.v then
     local resX, resY = getScreenResolution()
-    imgui.SetNextWindowSize(imgui.ImVec2(576, 350), 2)
+    imgui.SetNextWindowSize(imgui.ImVec2(700, 400), 2)
     imgui.SetNextWindowPos(imgui.ImVec2(resX/2, resY/2), 2, imgui.ImVec2(0.5, 0.5))
     imgui.Begin('Autotaker v'..thisScript()['version'], mainWindowState, imgui.WindowFlags.NoResize)
-    if imgui.CollapsingHeader('Тип работы скрипта') then
-      if imgui.ListBox('', typescriptwork, {'Police', 'FBI', 'Army'}, imgui.ImInt(3)) then
-        data['settings']['typescriptwork'] = typescriptwork.v
-        saveData()
-      end
-      imgui.Separator()
-    end
-    if imgui.CollapsingHeader('Список предметов') then
+    imgui.BeginGroup()
+      imgui.BeginChild('Left panel', imgui.ImVec2(100, 0), true)
+        if imgui.Selectable('Профили', selectedTab == 1) then selectedTab = 1 end
+        if imgui.Selectable('Настройки', selectedTab == 2) then selectedTab = 2 end
+        if imgui.Selectable('Информация', selectedTab == 3) then selectedTab = 3 end
+      imgui.EndChild()
+    imgui.EndGroup()
 
-      if typescriptwork.v == 0 then
-        for k, v in pairs(police_items) do
-          if imgui.Checkbox(names['police_items'][k], v) then
-            data['police_items'][k] = police_items[k].v
-            saveData()
-          end
-        end
-      end
-
-      if typescriptwork.v == 1 then
-        for k, v in pairs(fbi_items) do
-          if imgui.Checkbox(names['fbi_items'][k], v) then
-            data['fbi_items'][k] = fbi_items[k].v
-            saveData()
-          end
-        end
-      end
-
-      if typescriptwork.v == 2 then
-        for k, v in pairs(army_items) do
-          if imgui.Checkbox(names['army_items'][k], v) then
-            data['army_items'][k] = army_items[k].v
-            saveData()
-          end
-        end
-      end
-
-      imgui.Separator()
-    end
-    if imgui.CollapsingHeader('Список оружия') then
-
-      if typescriptwork.v == 0 then
-        for k, v in pairs(police_guns) do
-          if imgui.Checkbox(names['police_guns'][k], v) then
-            data['police_guns'][k] = police_guns[k].v
-            saveData()
-          end
-        end
-      end
-
-      if typescriptwork.v == 1 then
-        for k, v in pairs(fbi_guns) do
-          if imgui.Checkbox(names['fbi_guns'][k], v) then
-            data['fbi_guns'][k] = fbi_guns[k].v
-            saveData()
-          end
-        end
-      end
-
-      if typescriptwork.v == 2 then
-        for k, v in pairs(army_guns) do
-          if imgui.Checkbox(names['army_guns'][k], v) then
-            data['army_guns'][k] = army_guns[k].v
-            saveData()
-          end
-        end
-      end
-
-      imgui.Separator()
-    end
-    if imgui.Checkbox('Активно?', active) then
-      data['settings']['active'] = active.v
-      saveData()
-    end
-    if updatesAvaliable and imgui.Button('Скачать обновление', imgui.ImVec2(150, 0)) then
-      update('https://raw.githubusercontent.com/Akionka/autotaker/master/autotaker.lua')
-      mainWindowState.v = false
-    end
-    if not updatesAvaliable and imgui.Button('Проверить обновления', imgui.ImVec2(150, 0)) then
-      checkUpdates('https://raw.githubusercontent.com/Akionka/autotaker/master/version.json')
-    end
     imgui.SameLine()
-    if imgui.Button('Группа ВКонтакте', imgui.ImVec2(150, 0)) then os.execute('explorer "https://vk.com/akionkamods"') end
-    if imgui.Button('Bug report [VK]', imgui.ImVec2(150, 0)) then os.execute('explorer "https://vk.com/akionka"') end
-    imgui.SameLine()
-    if imgui.Button('Bug report [Telegram]', imgui.ImVec2(150, 0)) then os.execute('explorer "https://teleg.run/akionka"') end
+
+    if selectedTab == 1 then
+      imgui.BeginGroup()
+        imgui.BeginChild('Profiles', imgui.ImVec2(145, -imgui.GetItemsLineHeightWithSpacing() * 4 - 5), true)
+          for i, v in ipairs(data['profiles']) do
+            if imgui.Selectable(data['profiles'][i]['title']..'##'..i, selectedProfile == i) then
+              selectedProfile = i
+              data['settings']['selectedProfile'] = i
+              typescriptwork.v = data['profiles'][selectedProfile]['typescriptwork']
+              saveData()
+            end
+          end
+        imgui.EndChild()
+        if imgui.Button('Добавить', imgui.ImVec2(145/2-5, 0)) then
+          tempBuffers['title'] = imgui.ImBuffer('Profile', 32)
+          imgui.OpenPopup('Добавление профиля')
+        end
+        imgui.SameLine()
+        if selectedProfile ~= 0 and imgui.Button('Удалить', imgui.ImVec2(145/2-5, 0)) then
+          imgui.OpenPopup('Удаление профиля')
+        end
+
+        if imgui.BeginPopupModal('Добавление профиля', nil, 64) then
+          imgui.InputText('Название', tempBuffers['title'])
+          imgui.Separator()
+          imgui.SetCursorPosX((imgui.GetWindowWidth() - 240 + imgui.GetStyle().ItemSpacing.x) / 2)
+          if imgui.Button('Готово', imgui.ImVec2(120, 0)) then
+            table.insert(data['profiles'], defaultProfile)
+            data['profiles'][#data['profiles']]['title'] = tempBuffers['title'].v
+            saveData()
+            imgui.CloseCurrentPopup()
+          end
+          imgui.SameLine()
+          if imgui.Button('Отмена', imgui.ImVec2(120, 0)) then
+            imgui.CloseCurrentPopup()
+          end
+          imgui.EndPopup()
+        end
+
+        if imgui.BeginPopupModal('Удаление профиля', nil, 2) then
+          imgui.Text('Удаление профиля приведет к полной потере всех данных.\nЖелаете продолжить?')
+          imgui.Separator()
+          imgui.SetCursorPosX((imgui.GetWindowWidth() - 240 + imgui.GetStyle().ItemSpacing.x) / 2)
+          if imgui.Button('Да', imgui.ImVec2(120, 0)) then
+            table.remove(data['profiles'], selectedProfile)
+            selectedProfile = 0
+            data['settings']['selectedProfile'] = 0
+            saveData()
+            imgui.CloseCurrentPopup()
+          end
+          imgui.SameLine()
+          if imgui.Button('Нет', imgui.ImVec2(120, 0)) then
+            imgui.CloseCurrentPopup()
+          end
+          imgui.EndPopup()
+        end
+
+
+        if selectedProfile ~= 0 then
+          imgui.Text('Режим работы')
+          imgui.PushItemWidth(145)
+          if imgui.ListBox('', typescriptwork, {'Police', 'FBI', 'Army'}, imgui.ImInt(3)) then
+            data['profiles'][selectedProfile]['typescriptwork'] = typescriptwork.v
+            saveData()
+          end
+          imgui.PopItemWidth()
+        end
+      imgui.EndGroup()
+      imgui.SameLine()
+      imgui.BeginGroup()
+        imgui.BeginChild('Weapons', imgui.ImVec2(145, 0), true)
+          if selectedProfile ~= 0 then
+            if typescriptwork.v == 0 then
+              for k, v in pairs(data['profiles'][selectedProfile]['police_guns']) do
+                if imgui.Selectable(names['police_guns'][k], data['profiles'][selectedProfile]['police_guns'][k]) then
+                  data['profiles'][selectedProfile]['police_guns'][k] = not data['profiles'][selectedProfile]['police_guns'][k]
+                  saveData()
+                end
+              end
+
+            elseif typescriptwork.v == 1 then
+              for k, v in pairs(data['profiles'][selectedProfile]['fbi_guns']) do
+                if imgui.Selectable(names['fbi_guns'][k], data['profiles'][selectedProfile]['fbi_guns'][k]) then
+                  data['profiles'][selectedProfile]['fbi_guns'][k] = not data['profiles'][selectedProfile]['fbi_guns'][k]
+                  saveData()
+                end
+              end
+
+            elseif typescriptwork.v == 2 then
+              for k, v in pairs(data['profiles'][selectedProfile]['army_guns']) do
+                if imgui.Selectable(names['army_guns'][k], data['profiles'][selectedProfile]['army_guns'][k]) then
+                  data['profiles'][selectedProfile]['army_guns'][k] = not data['profiles'][selectedProfile]['army_guns'][k]
+                  saveData()
+                end
+              end
+            end
+          end
+        imgui.EndChild()
+      imgui.EndGroup()
+      imgui.SameLine()
+      imgui.BeginGroup()
+        imgui.BeginChild('Items', imgui.ImVec2(0, 0), true)
+          if selectedProfile ~= 0 then
+            if typescriptwork.v == 0 then
+              for k, v in pairs(data['profiles'][selectedProfile]['police_items']) do
+                if imgui.Selectable(names['police_items'][k], data['profiles'][selectedProfile]['police_items'][k]) then
+                  data['profiles'][selectedProfile]['police_items'][k] = not data['profiles'][selectedProfile]['police_items'][k]
+                  saveData()
+                end
+              end
+
+            elseif typescriptwork.v == 1 then
+              for k, v in pairs(data['profiles'][selectedProfile]['fbi_items']) do
+                if imgui.Selectable(names['fbi_items'][k], data['profiles'][selectedProfile]['fbi_items'][k]) then
+                  data['profiles'][selectedProfile]['fbi_items'][k] = not data['profiles'][selectedProfile]['fbi_items'][k]
+                  saveData()
+                end
+              end
+
+            elseif typescriptwork.v == 2 then
+              for k, v in pairs(data['profiles'][selectedProfile]['army_items']) do
+                if imgui.Selectable(names['army_items'][k], data['profiles'][selectedProfile]['army_items'][k]) then
+                  data['profiles'][selectedProfile]['army_items'][k] = not data['profiles'][selectedProfile]['army_items'][k]
+                  saveData()
+                end
+              end
+            end
+          end
+        imgui.EndChild()
+      imgui.EndGroup()
+
+
+    elseif selectedTab == 2 then
+      imgui.BeginGroup()
+        imgui.BeginChild('Settings')
+          if imgui.Checkbox('Всегда автоматически проверять обновления', imgui.ImBool(data['settings']['alwaysAutoCheckUpdates'])) then
+            data['settings']['alwaysAutoCheckUpdates'] = not data['settings']['alwaysAutoCheckUpdates']
+            saveData()
+          end
+          if imgui.Checkbox('Активно?', imgui.ImBool(data['settings']['active'])) then
+            data['settings']['active'] = not data['settings']['active']
+            saveData()
+          end
+        imgui.EndChild()
+      imgui.EndGroup()
+
+    elseif selectedTab == 3 then
+      imgui.BeginGroup()
+        imgui.BeginChild('Information')
+          imgui.Text('Название: Autotaker')
+          imgui.Text('Автор: Akionka')
+          imgui.Text('Версия: '..thisScript().version_num..' ('..thisScript().version..')')
+          imgui.Text('Команды: /autotaker')
+          if updatesAvaliable and imgui.Button('Скачать обновление', imgui.ImVec2(150, 0)) then
+            update('https://raw.githubusercontent.com/Akionka/autotaker/master/autotaker.lua')
+            mainWindowState.v = false
+          end
+          if not updatesAvaliable and imgui.Button('Проверить обновления', imgui.ImVec2(150, 0)) then
+            checkUpdates('https://raw.githubusercontent.com/Akionka/autotaker/master/version.json')
+          end
+          imgui.SameLine()
+          if imgui.Button('Группа ВКонтакте', imgui.ImVec2(150, 0)) then os.execute('explorer "https://vk.com/akionkamods"') end
+          if imgui.Button('Bug report [VK]', imgui.ImVec2(150, 0)) then os.execute('explorer "https://vk.com/akionka"') end
+          imgui.SameLine()
+          if imgui.Button('Bug report [Telegram]', imgui.ImVec2(150, 0)) then os.execute('explorer "https://teleg.run/akionka"') end
+        imgui.EndChild()
+      imgui.EndGroup()
+    end
+
     imgui.End()
   end
 end
@@ -388,22 +413,21 @@ function sampev.onSendPickedUpPickup(id)
     if locked then return false end
     if #orderList == 0 then
       if data['settings']['typescriptwork'] == 0 then
-        for k, v in pairs(data['police_items']) do
+        for k, v in pairs(data['profiles'][selectedProfile]['police_items']) do
           if v then
             table.insert(orderList, k)
-            print(k)
           end
         end
       end
       if data['settings']['typescriptwork'] == 1 then
-        for k, v in pairs(data['fbi_items']) do
+        for k, v in pairs(data['profiles'][selectedProfile]['fbi_items']) do
           if v then
             table.insert(orderList, k)
           end
         end
       end
       if data['settings']['typescriptwork'] == 2 then
-        for k, v in pairs(data['army_items']) do
+        for k, v in pairs(data['profiles'][selectedProfile]['army_items']) do
           if v then
             table.insert(orderList, k)
           end
@@ -416,21 +440,21 @@ function sampev.onSendPickedUpPickup(id)
   if get_pickup_model(id, pickup) == 2061 then
     if #orderList == 0 then
       if data['settings']['typescriptwork'] == 0 then
-        for k, v in pairs(data['police_guns']) do
+        for k, v in pairs(data['profiles'][selectedProfile]['police_guns']) do
           if v then
             table.insert(orderList, k - 1)
           end
         end
       end
       if data['settings']['typescriptwork'] == 1 then
-        for k, v in pairs(data['fbi_guns']) do
+        for k, v in pairs(data['profiles'][selectedProfile]['fbi_guns']) do
           if v then
             table.insert(orderList, k - 1)
           end
         end
       end
       if data['settings']['typescriptwork'] == 2 then
-        for k, v in pairs(data['army_guns']) do
+        for k, v in pairs(data['profiles'][selectedProfile]['army_guns']) do
           if v then
             table.insert(orderList, k - 1)
           end
@@ -500,39 +524,40 @@ function applyCustomStyle()
   style.GrabMinSize         = 8.0
   style.GrabRounding        = 0.0
 
-  colors[clr.FrameBg]             = ImVec4(0.00, 0.00, 0.00, 0.00)
-  colors[clr.FrameBgHovered]      = ImVec4(0.00, 0.00, 0.00, 0.00)
-  colors[clr.FrameBgActive]       = ImVec4(0.00, 0.00, 0.00, 0.00)
-  colors[clr.TitleBg]             = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.TitleBgActive]       = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.TitleBgCollapsed]    = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.CheckMark]           = ImVec4(0.60, 0.20, 0.80, 1.00)
-  -- colors[clr.SliderGrab]       = ImVec4(0.60, 0.20, 0.80, 1.00)
-  -- colors[clr.SliderGrabActive] = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.Button]              = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.ButtonHovered]       = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.ButtonActive]        = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.Header]              = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.HeaderHovered]       = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.HeaderActive]        = ImVec4(0.60, 0.20, 0.80, 1.00)
-  colors[clr.Separator]           = colors[clr.Border]
-  colors[clr.SeparatorHovered]    = ImVec4(0.75, 0.10, 0.10, 0.78)
-  colors[clr.SeparatorActive]     = ImVec4(0.75, 0.10, 0.10, 1.00)
-  colors[clr.ResizeGrip]          = ImVec4(0.15, 0.68, 0.38, 1.00)
-  colors[clr.ResizeGripHovered]   = ImVec4(0.15, 0.68, 0.38, 1.00)
-  colors[clr.ResizeGripActive]    = ImVec4(0.15, 0.68, 0.38, 0.95)
-  colors[clr.TextSelectedBg]      = ImVec4(0.98, 0.26, 0.26, 0.35)
-  colors[clr.Text]                = ImVec4(1.00, 1.00, 1.00, 1.00)
-  colors[clr.TextDisabled]        = ImVec4(0.50, 0.50, 0.50, 1.00)
-  colors[clr.WindowBg]            = ImVec4(0.13, 0.13, 0.13, 1.00)
-  colors[clr.ChildWindowBg]       = ImVec4(0.13, 0.13, 0.13, 1.00)
-  colors[clr.PopupBg]             = ImVec4(0.13, 0.13, 0.13, 1.00)
-  colors[clr.ComboBg]             = colors[clr.PopupBg]
-  colors[clr.Border]              = ImVec4(0.43, 0.43, 0.50, 0.00)
-  colors[clr.BorderShadow]        = ImVec4(0.00, 0.00, 0.00, 0.00)
-  colors[clr.CloseButton]         = ImVec4(0.60, 0.20, 0.80, 0.50)
-  colors[clr.CloseButtonHovered]  = ImVec4(0.60, 0.20, 0.80, 0.50)
-  colors[clr.CloseButtonActive]   = ImVec4(0.60, 0.20, 0.80, 0.50)
+  colors[clr.FrameBg]              = ImVec4(0.00, 0.00, 0.00, 0.00)
+  colors[clr.FrameBgHovered]       = ImVec4(0.00, 0.00, 0.00, 0.00)
+  colors[clr.FrameBgActive]        = ImVec4(0.00, 0.00, 0.00, 0.00)
+  colors[clr.TitleBg]              = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.TitleBgActive]        = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.TitleBgCollapsed]     = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.CheckMark]            = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.ScrollbarGrab]        = ImVec4(0.60, 0.20, 0.80, 0.25)
+  colors[clr.ScrollbarGrabHovered] = ImVec4(0.60, 0.20, 0.80, 0.50)
+  colors[clr.ScrollbarGrabActive]  = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.Button]               = ImVec4(0.60, 0.20, 0.80, 0.25)
+  colors[clr.ButtonHovered]        = ImVec4(0.60, 0.20, 0.80, 0.50)
+  colors[clr.ButtonActive]         = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.Header]               = ImVec4(0.60, 0.20, 0.80, 0.25)
+  colors[clr.HeaderHovered]        = ImVec4(0.60, 0.20, 0.80, 0.50)
+  colors[clr.HeaderActive]         = ImVec4(0.60, 0.20, 0.80, 1.00)
+  colors[clr.Separator]            = colors[clr.Border]
+  colors[clr.SeparatorHovered]     = ImVec4(0.75, 0.10, 0.10, 0.78)
+  colors[clr.SeparatorActive]      = ImVec4(0.75, 0.10, 0.10, 1.00)
+  colors[clr.ResizeGrip]           = ImVec4(0.15, 0.68, 0.38, 1.00)
+  colors[clr.ResizeGripHovered]    = ImVec4(0.15, 0.68, 0.38, 1.00)
+  colors[clr.ResizeGripActive]     = ImVec4(0.15, 0.68, 0.38, 0.95)
+  colors[clr.TextSelectedBg]       = ImVec4(0.98, 0.26, 0.26, 0.35)
+  colors[clr.Text]                 = ImVec4(1.00, 1.00, 1.00, 1.00)
+  colors[clr.TextDisabled]         = ImVec4(0.50, 0.50, 0.50, 1.00)
+  colors[clr.WindowBg]             = ImVec4(0.13, 0.13, 0.13, 1.00)
+  colors[clr.ChildWindowBg]        = ImVec4(0.13, 0.13, 0.13, 1.00)
+  colors[clr.PopupBg]              = ImVec4(0.13, 0.13, 0.13, 1.00)
+  colors[clr.ComboBg]              = colors[clr.PopupBg]
+  colors[clr.Border]               = ImVec4(0.43, 0.43, 0.50, 0.00)
+  colors[clr.BorderShadow]         = ImVec4(0.00, 0.00, 0.00, 0.00)
+  colors[clr.CloseButton]          = ImVec4(0.60, 0.20, 0.80, 0.50)
+  colors[clr.CloseButtonHovered]   = ImVec4(0.60, 0.20, 0.80, 0.50)
+  colors[clr.CloseButtonActive]    = ImVec4(0.60, 0.20, 0.80, 0.50)
 end
 
 function main()
@@ -612,32 +637,15 @@ function loadData()
   data = decodeJson(configFile:read('*a'))
   configFile:close()
 
-  active.v          = data['settings']['active'] or false
-  typescriptwork.v  = data['settings']['typescriptwork'] or 0
+  active.v         = data['settings']['active'] or false
+  selectedProfile  = data['settings']['selectedProfile'] or 1
 
-  for k, v in pairs(police_items) do
-    police_items[k].v = data['police_items'][k] or false
+  if selectedProfile == 0 then return end
+  if selectedProfile < 0 or selectedProfile > #data['profiles'] then
+    selectedProfile = 0
+    return
   end
-
-  for k, v in pairs(fbi_items) do
-    fbi_items[k].v = data['fbi_items'][k] or false
-  end
-
-  for k, v in pairs(army_items) do
-    army_items[k].v = data['army_items'][k] or false
-  end
-
-  for k, v in pairs(police_guns) do
-    police_guns[k].v = data['police_guns'][k] or false
-  end
-
-  for k, v in pairs(fbi_guns) do
-    fbi_guns[k].v = data['fbi_guns'][k] or false
-  end
-
-  for k, v in pairs(army_guns) do
-    army_guns[k].v = data['army_guns'][k] or false
-  end
+  typescriptwork.v = data['profiles'][selectedProfile]['typescriptwork'] or 0
 end
 
 function saveData()
