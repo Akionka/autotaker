@@ -469,7 +469,7 @@ function sampev.onSendPickedUpPickup(id)
 end
 
 function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
-  alert(id..'|'..u8:encode(title))
+  -- alert(id..'|'..u8:encode(title))
 
   if (id == 81 or id == 83) and data['settings']['active'] then
     if #orderList == 0 then
