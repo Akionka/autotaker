@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.4.1')
-script_version_number(7)
+script_version('1.4.2')
+script_version_number(8)
 script_moonloader(27)
 
 require 'deps' {
@@ -36,75 +36,82 @@ local data = {
     active                 = false,
     alwaysAutoCheckUpdates = false,
   },
+
   police_items = {
-    armor     = false, -- Бронежилет
-    nvdevice  = false, -- Прибор ночного видения
-    shield    = false, -- Полицейский щит
-    torch     = false, -- Фонарик
-    bhelmet   = false, -- Чёрный шлем SWAT
-    whelmet   = false, -- Белый шлем SWAT
-    mask      = false, -- Вязаная маска
-    bglasses  = false, -- Очки «Police Black»
-    rglasses  = false, -- Очки «Police Red»
-    blglasses = false, -- Очки «Police Blue»
-    gmask     = false, -- Противогаз
-    ccap      = false, -- Парадная фуражка
-    ocap      = false, -- Офицерская фуражка
-    bhh       = false, -- Черная полицейская каска
-    blhh      = false, -- Синяя полицейская каска
-    helmet    = false, -- Шлем патрульного
-    pcap      = false, -- Полицейская кепка
-    baton     = false, -- Жезл регулировщика
-    vest      = false, -- Оранжевый жилет
-    brhat     = false, -- Черная шляпа шерифа
-    bhat      = false, -- Коричневая шляпа шерифа
+    false, -- Бронежилет
+    false, -- Прибор ночного видения
+    false, -- Полицейский щит
+    false, -- Фонарик
+    false, -- Чёрный шлем SWAT
+    false, -- Белый шлем SWAT
+    false, -- Вязаная маска
+    false, -- Очки «Police Black»
+    false, -- Очки «Police Red»
+    false, -- Очки «Police Blue»
+    false, -- Противогаз
+    false, -- Парадная фуражка
+    false, -- Офицерская фуражка
+    false, -- Черная полицейская каска
+    false, -- Синяя полицейская каска
+    false, -- Шлем патрульного
+    false, -- Полицейская кепка
+    false, -- Жезл регулировщика
+    false, -- Оранжевый жилет
+    false, -- Черная шляпа шерифа
+    false, -- Коричневая шляпа шерифа
   },
+
   fbi_items = {
-    armor     = false, -- Бронежилет
-    nvdevice  = false, -- Прибор ночного видения
-    shield    = false, -- Полицейский щит
-    torch     = false, -- Фонарик
-    bhelmet   = false, -- Чёрный шлем SWAT
-    whelmet   = false, -- Белый шлем SWAT
-    mask      = false, -- Вязаная маска
-    bglasses  = false, -- Очки «Police Black»
-    rglasses  = false, -- Очки «Police Red»
-    blglasses = false, -- Очки «Police Blue»
-    gmask     = false, -- Противогаз
+    false, -- Бронежилет
+    false, -- Прибор ночного видения
+    false, -- Полицейский щит
+    false, -- Фонарик
+    false, -- Чёрный шлем SWAT
+    false, -- Белый шлем SWAT
+    false, -- Вязаная маска
+    false, -- Очки «Police Black»
+    false, -- Очки «Police Red»
+    false, -- Очки «Police Blue»
+    false, -- Противогаз
   },
+
   army_items = {
-    armor       = false, -- Бронежилет
-    nvdevice    = false, -- Прибор ночного видения
-    ls          = false, -- Громкоговоритель
-    beretarmy   = false, -- Берет «Army»
-    beretkrap   = false, -- Берет «Krap»
-    beretdesant = false, -- Берет «Desant»
+    false, -- Бронежилет
+    false, -- Прибор ночного видения
+    false, -- Громкоговоритель
+    false, -- Берет «Army»
+    false, -- Берет «Krap»
+    false, -- Берет «Desant»
   },
+
   police_guns = {
-    m4      = false,
-    stick   = false,
-    mp5     = false,
-    deagle  = false,
-    rifle   = false,
-    shotgun = false,
+    false, -- Дубинка
+    false, -- M4
+    false, -- MP5
+    false, -- Дробовик
+    false, -- Винтовка
+    false, -- Desert Eagle
+    false, -- Дымовая шашка
   },
   fbi_guns = {
-    stick   = false,
-    m4      = false,
-    mp5     = false,
-    deagle  = false,
-    rifle   = false,
-    shotgun = false,
-    srifle  = false,
-    sawed   = false,
-    grens   = false
+    false, -- Tazer
+    false, -- M4
+    false, -- MP5
+    false, -- Desert Eagle
+    false, -- Винтовка
+    false, -- Дробовик
+    false, -- Снайперская винтовка
+    false, -- Обрез
+    false, -- Дымовая шашка
   },
+
   army_guns = {
-    m4      = false,
-    mp5     = false,
-    deagle  = false,
-    rifle   = false,
-    shotgun = false,
+    false, -- M4
+    false, -- MP5
+    false, -- Desert Eagle
+    false, -- Винтовка
+    false, -- Дробовик
+    false, -- Дымовая шашка
   },
 }
 
@@ -113,206 +120,163 @@ local active          = imgui.ImBool(false)
 local typescriptwork  = imgui.ImInt(0)
 
 local police_items = {
-  armor     = imgui.ImBool(false),
-  nvdevice  = imgui.ImBool(false),
-  shield    = imgui.ImBool(false),
-  torch     = imgui.ImBool(false),
-  bhelmet   = imgui.ImBool(false),
-  whelmet   = imgui.ImBool(false),
-  mask      = imgui.ImBool(false),
-  bglasses  = imgui.ImBool(false),
-  rglasses  = imgui.ImBool(false),
-  blglasses = imgui.ImBool(false),
-  gmask     = imgui.ImBool(false),
-  ccap      = imgui.ImBool(false),
-  ocap      = imgui.ImBool(false),
-  bhh       = imgui.ImBool(false),
-  blhh      = imgui.ImBool(false),
-  helmet    = imgui.ImBool(false),
-  pcap      = imgui.ImBool(false),
-  baton     = imgui.ImBool(false),
-  vest      = imgui.ImBool(false),
-  brhat     = imgui.ImBool(false),
-  bhat      = imgui.ImBool(false),
+  imgui.ImBool(false), -- Бронежилет
+  imgui.ImBool(false), -- Прибор ночного видения
+  imgui.ImBool(false), -- Полицейский щит
+  imgui.ImBool(false), -- Фонарик
+  imgui.ImBool(false), -- Чёрный шлем SWAT
+  imgui.ImBool(false), -- Белый шлем SWAT
+  imgui.ImBool(false), -- Вязаная маска
+  imgui.ImBool(false), -- Очки «Police Black»
+  imgui.ImBool(false), -- Очки «Police Red»
+  imgui.ImBool(false), -- Очки «Police Blue»
+  imgui.ImBool(false), -- Противогаз
+  imgui.ImBool(false), -- Парадная фуражка
+  imgui.ImBool(false), -- Офицерская фуражка
+  imgui.ImBool(false), -- Черная полицейская каска
+  imgui.ImBool(false), -- Синяя полицейская каска
+  imgui.ImBool(false), -- Шлем патрульного
+  imgui.ImBool(false), -- Полицейская кепка
+  imgui.ImBool(false), -- Жезл регулировщика
+  imgui.ImBool(false), -- Оранжевый жилет
+  imgui.ImBool(false), -- Черная шляпа шерифа
+  imgui.ImBool(false), -- Коричневая шляпа шерифа
 }
 
 local fbi_items = {
-  armor     = imgui.ImBool(false),
-  nvdevice  = imgui.ImBool(false),
-  shield    = imgui.ImBool(false),
-  torch     = imgui.ImBool(false),
-  bhelmet   = imgui.ImBool(false),
-  whelmet   = imgui.ImBool(false),
-  mask      = imgui.ImBool(false),
-  bglasses  = imgui.ImBool(false),
-  rglasses  = imgui.ImBool(false),
-  blglasses = imgui.ImBool(false),
-  gmask     = imgui.ImBool(false),
+  imgui.ImBool(false), -- Бронежилет
+  imgui.ImBool(false), -- Прибор ночного видения
+  imgui.ImBool(false), -- Полицейский щит
+  imgui.ImBool(false), -- Фонарик
+  imgui.ImBool(false), -- Чёрный шлем SWAT
+  imgui.ImBool(false), -- Белый шлем SWAT
+  imgui.ImBool(false), -- Вязаная маска
+  imgui.ImBool(false), -- Очки «Police Black»
+  imgui.ImBool(false), -- Очки «Police Red»
+  imgui.ImBool(false), -- Очки «Police Blue»
+  imgui.ImBool(false), -- Противогаз
 }
 
 local army_items = {
-  armor       = imgui.ImBool(false),
-  nvdevice    = imgui.ImBool(false),
-  ls          = imgui.ImBool(false),
-  beretarmy   = imgui.ImBool(false),
-  beretkrap   = imgui.ImBool(false),
-  beretdesant = imgui.ImBool(false),
+  imgui.ImBool(false), -- Бронежилет
+  imgui.ImBool(false), -- Прибор ночного видения
+  imgui.ImBool(false), -- Громкоговоритель
+  imgui.ImBool(false), -- Берет «Army»
+  imgui.ImBool(false), -- Берет «Krap»
+  imgui.ImBool(false), -- Берет «Desant»
 }
 
 local police_guns = {
-  stick   = imgui.ImBool(false),
-  m4      = imgui.ImBool(false),
-  mp5     = imgui.ImBool(false),
-  deagle  = imgui.ImBool(false),
-  rifle   = imgui.ImBool(false),
-  shotgun = imgui.ImBool(false),
-  tearg   = imgui.ImBool(false),
+  imgui.ImBool(false), -- Дубинка
+  imgui.ImBool(false), -- M4
+  imgui.ImBool(false), -- MP5
+  imgui.ImBool(false), -- Дробовик
+  imgui.ImBool(false), -- Винтовка
+  imgui.ImBool(false), -- Desert Eagle
+  imgui.ImBool(false), -- Дымовая шашка
 }
 
 local fbi_guns = {
-  stick   = imgui.ImBool(false),
-  m4      = imgui.ImBool(false),
-  mp5     = imgui.ImBool(false),
-  deagle  = imgui.ImBool(false),
-  rifle   = imgui.ImBool(false),
-  shotgun = imgui.ImBool(false),
-  srifle  = imgui.ImBool(false),
-  sawed   = imgui.ImBool(false),
-  grens   = imgui.ImBool(false),
-  tearg   = imgui.ImBool(false),
+  imgui.ImBool(false), -- Tazer
+  imgui.ImBool(false), -- M4
+  imgui.ImBool(false), -- MP5
+  imgui.ImBool(false), -- Shotgun
+  imgui.ImBool(false), -- Rifle
+  imgui.ImBool(false), -- Desert Eagle
+  imgui.ImBool(false), -- Sniper Rifle
+  imgui.ImBool(false), -- Sawed-off shotgun
+  imgui.ImBool(false), -- Grenades
+  imgui.ImBool(false), -- Дымовая шашка
 }
 
 local army_guns = {
-  m4      = imgui.ImBool(false),
-  mp5     = imgui.ImBool(false),
-  deagle  = imgui.ImBool(false),
-  rifle   = imgui.ImBool(false),
-  shotgun = imgui.ImBool(false),
-  tearg   = imgui.ImBool(false),
+  imgui.ImBool(false), -- M4
+  imgui.ImBool(false), -- MP5
+  imgui.ImBool(false), -- Desert Eagle
+  imgui.ImBool(false), -- Rifle
+  imgui.ImBool(false), -- Shotgun
+  imgui.ImBool(false), -- Дымовая шашка
 }
 
 local names = {
-  items = {
-    armor       = 'Бронежилет',
-    shield      = 'Полицейский щит',
-    torch       = 'Фонарик',
-    bhelmet     = 'Чёрный шлем SWAT',
-    whelmet     = 'Белый шлем SWAT',
-    mask        = 'Вязаная маска',
-    bglasses    = 'Очки «Police Black»',
-    rglasses    = 'Очки «Police Red»',
-    blglasses   = 'Очки «Police Blue»',
-    gmask       = 'Противогаз',
-    ccap        = 'Парадная фуражка',
-    ocap        = 'Офицерская фуражка',
-    bhh         = 'Черная полицейская каска',
-    blhh        = 'Синяя полицейская каска',
-    helmet      = 'Шлем патрульного',
-    pcap        = 'Полицейская кепка',
-    baton       = 'Жезл регулировщика',
-    vest        = 'Оранжевый жилет',
-    brhat       = 'Черная шляпа шерифа',
-    bhat        = 'Коричневая шляпа шерифа',
-    nvdevice    = 'Прибор НВ',
-    ls          = 'Громкоговоритель',
-    beretarmy   = 'Берет «Army»',
-    beretkrap   = 'Берет «Krap»',
-    beretdesant = 'Берет «Desant»',
-  },
-
-  guns = {
-    stick   = 'Тайзер',
-    m4      = 'M4',
-    mp5     = 'MP5',
-    shotgun = 'Дробовик',
-    rifle   = 'Винтовка',
-    deagle  = 'Desert Eagle',
-    srifle  = 'Снайперская винтовка',
-    sawed   = 'Обрез',
-    grens   = 'Гранаты',
-    tearg   = 'Дымовая шашка'
-  },
-}
-
-local ids = {
   police_items = {
-    armor     = 1, -- Бронежилет
-    nvdevice  = 2, -- Прибор ночного видения
-    shield    = 3, -- Полицейский щит
-    torch     = 4, -- Фонарик
-    bhelmet   = 5, -- Чёрный шлем SWAT
-    whelmet   = 6, -- Белый шлем SWAT
-    mask      = 7, -- Вязаная маска
-    bglasses  = 8, -- Очки «Police Black»
-    rglasses  = 9, -- Очки «Police Red»
-    blglasses = 10, -- Очки «Police Blue»
-    gmask     = 11, -- Противогаз
-    ccap      = 12, -- Парадная фуражка
-    ocap      = 13, -- Офицерская фуражка
-    bhh       = 14, -- Черная полицейская каска
-    blhh      = 15, -- Синяя полицейская каска
-    helmet    = 16, -- Шлем патрульного
-    pcap      = 17, -- Полицейская кепка
-    baton     = 18, -- Жезл регулировщика
-    vest      = 19, -- Оранжевый жилет
-    brhat     = 20, -- Черная шляпа шерифа
-    bhat      = 21, -- Коричневая шляпа шерифа
+    'Бронежилет',
+    'Прибор ночного видения',
+    'Полицейский щит',
+    'Фонарик',
+    'Чёрный шлем SWAT',
+    'Белый шлем SWAT',
+    'Вязаная маска',
+    'Очки «Police Black»',
+    'Очки «Police Red»',
+    'Очки «Police Blue»',
+    'Противогаз',
+    'Парадная фуражка',
+    'Офицерская фуражка',
+    'Черная полицейская каска',
+    'Синяя полицейская каска',
+    'Шлем патрульного',
+    'Полицейская кепка',
+    'Жезл регулировщика',
+    'Оранжевый жилет',
+    'Черная шляпа шерифа',
+    'Коричневая шляпа шерифа',
   },
 
   fbi_items = {
-    armor     = 1, -- Бронежилет
-    nvdevice  = 2, -- Прибор ночного видения
-    shield    = 3, -- Полицейский щит
-    torch     = 4, -- Фонарик
-    bhelmet   = 5, -- Чёрный шлем SWAT
-    whelmet   = 6, -- Белый шлем SWAT
-    mask      = 7, -- Вязаная маска
-    bglasses  = 8, -- Очки «Police Black»
-    rglasses  = 9, -- Очки «Police Red»
-    blglasses = 10, -- Очки «Police Blue»
-    gmask     = 11, -- Противогаз
+    'Бронежилет',
+    'Прибор ночного видения',
+    'Полицейский щит',
+    'Фонарик',
+    'Чёрный шлем SWAT',
+    'Белый шлем SWAT',
+    'Вязаная маска',
+    'Очки «Police Black»',
+    'Очки «Police Red»',
+    'Очки «Police Blue»',
+    'Противогаз',
   },
 
   army_items = {
-    armor       = 0, -- Бронежилет
-    nvdevice    = 1, -- Прибор ночного видения
-    ls          = 2, -- Громкоговоритель
-    beretarmy   = 3, -- Берет «Army»
-    beretkrap   = 4, -- Берет «Krap»
-    beretdesant = 5, -- Берет «Desant»
+    'Бронежилет',
+    'Прибор ночного видения',
+    'Громкоговоритель',
+    'Берет «Army»',
+    'Берет «Krap»',
+    'Берет «Desant»',
   },
 
   police_guns = {
-    stick   = 0, -- Tazer
-    m4      = 1, -- M4
-    mp5     = 2, -- MP5
-    deagle  = 5, -- Desert Eagle
-    rifle   = 4, -- Rifle
-    shotgun = 3, -- Shotgun
-    tearg   = 6, -- Дымовая шашка
+    'Дубинка',
+    'M4',
+    'MP5',
+    'Shotgun',
+    'Rifle',
+    'Desert Eagle',
+    'Дымовая шашка',
   },
 
   fbi_guns = {
-    stick   = 0, -- Tazer
-    m4      = 1, -- M4
-    mp5     = 2, -- MP5
-    shotgun = 3, -- Shotgun
-    rifle   = 4, -- Rifle
-    deagle  = 5, -- Desert Eagle
-    srifle  = 6, -- Sniper Rifle
-    sawed   = 7, -- Sawed-off shotgun
-    grens   = 8, -- Grenades
-    tearg   = 9, -- Дымовая шашка
+    'Дубинка',
+    'M4',
+    'MP5',
+    'Shotgun',
+    'Rifle',
+    'Desert Eagle',
+    'Снайперская винтовка',
+    'Обрез',
+    'Гранаты',
+    'Дымовая шашка',
   },
 
   army_guns = {
-    m4      = 0, -- M4
-    mp5     = 1, -- MP5
-    deagle  = 2, -- Desert Eagle
-    rifle   = 3, -- Rifle
-    shotgun = 4, -- Shotgun
-    tearg   = 5, -- Дымовая шашка
-  }
+    'M4',
+    'MP5',
+    'Desert Eagle',
+    'Rifle',
+    'Shotgun',
+    'Дымовая шашка',
+  },
 }
 
 function imgui.OnDrawFrame()
@@ -332,7 +296,7 @@ function imgui.OnDrawFrame()
 
       if typescriptwork.v == 0 then
         for k, v in pairs(police_items) do
-          if imgui.Checkbox(names['items'][k], v) then
+          if imgui.Checkbox(names['police_items'][k], v) then
             data['police_items'][k] = police_items[k].v
             saveData()
           end
@@ -341,7 +305,7 @@ function imgui.OnDrawFrame()
 
       if typescriptwork.v == 1 then
         for k, v in pairs(fbi_items) do
-          if imgui.Checkbox(names['items'][k], v) then
+          if imgui.Checkbox(names['fbi_items'][k], v) then
             data['fbi_items'][k] = fbi_items[k].v
             saveData()
           end
@@ -350,7 +314,7 @@ function imgui.OnDrawFrame()
 
       if typescriptwork.v == 2 then
         for k, v in pairs(army_items) do
-          if imgui.Checkbox(names['items'][k], v) then
+          if imgui.Checkbox(names['army_items'][k], v) then
             data['army_items'][k] = army_items[k].v
             saveData()
           end
@@ -363,7 +327,7 @@ function imgui.OnDrawFrame()
 
       if typescriptwork.v == 0 then
         for k, v in pairs(police_guns) do
-          if imgui.Checkbox(names['guns'][k], v) then
+          if imgui.Checkbox(names['police_guns'][k], v) then
             data['police_guns'][k] = police_guns[k].v
             saveData()
           end
@@ -372,7 +336,7 @@ function imgui.OnDrawFrame()
 
       if typescriptwork.v == 1 then
         for k, v in pairs(fbi_guns) do
-          if imgui.Checkbox(names['guns'][k], v) then
+          if imgui.Checkbox(names['fbi_guns'][k], v) then
             data['fbi_guns'][k] = fbi_guns[k].v
             saveData()
           end
@@ -381,7 +345,7 @@ function imgui.OnDrawFrame()
 
       if typescriptwork.v == 2 then
         for k, v in pairs(army_guns) do
-          if imgui.Checkbox(names['guns'][k], v) then
+          if imgui.Checkbox(names['army_guns'][k], v) then
             data['army_guns'][k] = army_guns[k].v
             saveData()
           end
@@ -426,21 +390,22 @@ function sampev.onSendPickedUpPickup(id)
       if data['settings']['typescriptwork'] == 0 then
         for k, v in pairs(data['police_items']) do
           if v then
-            table.insert(orderList, ids['police_items'][k])
+            table.insert(orderList, k)
+            print(k)
           end
         end
       end
       if data['settings']['typescriptwork'] == 1 then
         for k, v in pairs(data['fbi_items']) do
           if v then
-            table.insert(orderList, ids['fbi_items'][k])
+            table.insert(orderList, k)
           end
         end
       end
       if data['settings']['typescriptwork'] == 2 then
         for k, v in pairs(data['army_items']) do
           if v then
-            table.insert(orderList, ids['army_items'][k])
+            table.insert(orderList, k)
           end
         end
       end
@@ -453,21 +418,21 @@ function sampev.onSendPickedUpPickup(id)
       if data['settings']['typescriptwork'] == 0 then
         for k, v in pairs(data['police_guns']) do
           if v then
-            table.insert(orderList, ids['police_guns'][k])
+            table.insert(orderList, k - 1)
           end
         end
       end
       if data['settings']['typescriptwork'] == 1 then
         for k, v in pairs(data['fbi_guns']) do
           if v then
-            table.insert(orderList, ids['fbi_guns'][k])
+            table.insert(orderList, k - 1)
           end
         end
       end
       if data['settings']['typescriptwork'] == 2 then
         for k, v in pairs(data['army_guns']) do
           if v then
-            table.insert(orderList, ids['army_guns'][k])
+            table.insert(orderList, k - 1)
           end
         end
       end
