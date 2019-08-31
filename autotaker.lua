@@ -492,7 +492,6 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
     for k, v in pairs(orderList) do
       if v then
         close_next = true
-        print(orderList[1])
         sampSendDialogResponse(id, 1, orderList[1], '')
         return false
       end
@@ -517,10 +516,6 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
       end
     end
   end
-end
-
-function sampev.onSendDialogResponse(id, btn, list, text)
-  print(id, btn, list, text)
 end
 
 function applyCustomStyle()
