@@ -108,7 +108,7 @@ local data = {
   },
 }
 
-local mainWindowState = imgui.ImBool(true)
+local mainWindowState = imgui.ImBool(false)
 local active          = imgui.ImBool(false)
 local typescriptwork  = imgui.ImInt(0)
 
