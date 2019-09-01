@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.5.1')
-script_version_number(10)
+script_version('1.5.2')
+script_version_number(11)
 script_moonloader(27)
 
 require 'deps' {
@@ -430,21 +430,22 @@ function sampev.onSendPickedUpPickup(id)
   if get_pickup_model(id, pickup) == 1242 then
     if locked then return false end
     if #orderList == 0 then
-      if data['settings']['typescriptwork'] == 0 then
+      if data['profiles'][selectedProfile]['typescriptwork'] == 0 then
         for k, v in pairs(data['profiles'][selectedProfile]['police_items']) do
+          print(v, k)
           if v then
             table.insert(orderList, k)
           end
         end
       end
-      if data['settings']['typescriptwork'] == 1 then
+      if data['profiles'][selectedProfile]['typescriptwork'] == 1 then
         for k, v in pairs(data['profiles'][selectedProfile]['fbi_items']) do
           if v then
             table.insert(orderList, k)
           end
         end
       end
-      if data['settings']['typescriptwork'] == 2 then
+      if data['profiles'][selectedProfile]['typescriptwork'] == 2 then
         for k, v in pairs(data['profiles'][selectedProfile]['army_items']) do
           if v then
             table.insert(orderList, k)
@@ -457,21 +458,21 @@ function sampev.onSendPickedUpPickup(id)
   -- Оружейная
   if get_pickup_model(id, pickup) == 2061 then
     if #orderList == 0 then
-      if data['settings']['typescriptwork'] == 0 then
+      if data['profiles'][selectedProfile]['typescriptwork'] == 0 then
         for k, v in pairs(data['profiles'][selectedProfile]['police_guns']) do
           if v then
             table.insert(orderList, k - 1)
           end
         end
       end
-      if data['settings']['typescriptwork'] == 1 then
+      if data['profiles'][selectedProfile]['typescriptwork'] == 1 then
         for k, v in pairs(data['profiles'][selectedProfile]['fbi_guns']) do
           if v then
             table.insert(orderList, k - 1)
           end
         end
       end
-      if data['settings']['typescriptwork'] == 2 then
+      if data['profiles'][selectedProfile]['typescriptwork'] == 2 then
         for k, v in pairs(data['profiles'][selectedProfile]['army_guns']) do
           if v then
             table.insert(orderList, k - 1)
