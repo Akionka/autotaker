@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.5.2')
-script_version_number(11)
+script_version('1.5.3')
+script_version_number(12)
 script_moonloader(27)
 
 require 'deps' {
@@ -37,6 +37,7 @@ local defaultProfile = {
   police_items = {
     false, -- Бронежилет
     false, -- Прибор ночного видения
+    false, -- Кобура
     false, -- Полицейский щит
     false, -- Фонарик
     false, -- Чёрный шлем SWAT
@@ -61,6 +62,7 @@ local defaultProfile = {
   fbi_items = {
     false, -- Бронежилет
     false, -- Прибор ночного видения
+    false, -- Кобура
     false, -- Полицейский щит
     false, -- Фонарик
     false, -- Чёрный шлем SWAT
@@ -75,6 +77,7 @@ local defaultProfile = {
   army_items = {
     false, -- Бронежилет
     false, -- Прибор ночного видения
+    false, -- Кобура
     false, -- Громкоговоритель
     false, -- Берет «Army»
     false, -- Берет «Krap»
@@ -90,6 +93,7 @@ local defaultProfile = {
     false, -- Desert Eagle
     false, -- Дымовая шашка
   },
+
   fbi_guns = {
     false, -- Tazer
     false, -- M4
@@ -134,6 +138,7 @@ local names = {
   police_items = {
     'Бронежилет',
     'Прибор ночного видения',
+    'Кобура',
     'Полицейский щит',
     'Фонарик',
     'Чёрный шлем SWAT',
@@ -158,6 +163,7 @@ local names = {
   fbi_items = {
     'Бронежилет',
     'Прибор ночного видения',
+    'Кобура',
     'Полицейский щит',
     'Фонарик',
     'Чёрный шлем SWAT',
@@ -172,6 +178,7 @@ local names = {
   army_items = {
     'Бронежилет',
     'Прибор ночного видения',
+    'Кобура',
     'Громкоговоритель',
     'Берет «Army»',
     'Берет «Krap»',
@@ -432,7 +439,6 @@ function sampev.onSendPickedUpPickup(id)
     if #orderList == 0 then
       if data['profiles'][selectedProfile]['typescriptwork'] == 0 then
         for k, v in pairs(data['profiles'][selectedProfile]['police_items']) do
-          print(v, k)
           if v then
             table.insert(orderList, k)
           end
