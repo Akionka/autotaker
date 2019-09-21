@@ -542,18 +542,18 @@ function applyCustomStyle()
   local clr    = imgui.Col
   local ImVec4 = imgui.ImVec4
 
-  -- style.FrameBorderSize = 1.0
+  -- style.FrameBorderSize  = 1.0
   style.WindowTitleAlign    = imgui.ImVec2(0.5, 0.5)
-  style.FramePadding      = imgui.ImVec2(4.0, 2.0)
-  style.ItemSpacing       = imgui.ImVec2(8.0, 2.0)
-  -- style.WindowBorderSize  = 1.0
-  -- style.TabBorderSize     = 1.0
-  style.WindowRounding    = 1.0
-  -- style.ChildRounding     = 1.0
-  style.FrameRounding     = 1.0
-  style.ScrollbarRounding = 1.0
-  style.GrabRounding      = 1.0
-  -- style.TabRounding       = 1.0
+  style.FramePadding        = imgui.ImVec2(4.0, 2.0)
+  style.ItemSpacing         = imgui.ImVec2(8.0, 2.0)
+  -- style.WindowBorderSize = 1.0
+  style.TabBorderSize       = 1.0
+  style.WindowRounding      = 1.0
+  -- style.ChildRounding    = 1.0
+  style.FrameRounding       = 1.0
+  style.ScrollbarRounding   = 1.0
+  style.GrabRounding        = 1.0
+  -- style.TabRounding      = 1.0
 
   colors[clr.Text]                  = ImVec4(1.00, 1.00, 1.00, 0.95)
   colors[clr.TextDisabled]          = ImVec4(0.50, 0.50, 0.50, 1.00)
