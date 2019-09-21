@@ -547,7 +547,7 @@ function applyCustomStyle()
   style.FramePadding        = imgui.ImVec2(4.0, 2.0)
   style.ItemSpacing         = imgui.ImVec2(8.0, 2.0)
   -- style.WindowBorderSize = 1.0
-  style.TabBorderSize       = 1.0
+  -- style.TabBorderSize       = 1.0
   style.WindowRounding      = 1.0
   -- style.ChildRounding    = 1.0
   style.FrameRounding       = 1.0
