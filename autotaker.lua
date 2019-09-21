@@ -1,20 +1,23 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.5.3')
-script_version_number(12)
+script_version('1.5.4')
+script_version_number(13)
 script_moonloader(27)
 
 require 'deps' {
   'fyp:samp-lua',
   'fyp:moon-imgui',
+  'kikito:semver'
 }
 
 local sampev           = require 'lib.samp.events'
 local encoding         = require 'encoding'
 local imgui            = require 'imgui'
+local v                = require 'semver'
 
 
 local updatesAvaliable = false
+local lastTagAvaliable = '1.0'
 
 encoding.default       = 'cp1251'
 local u8               = encoding.UTF8
@@ -402,14 +405,14 @@ function imgui.OnDrawFrame()
         imgui.BeginChild('Information')
           imgui.Text('Название: Autotaker')
           imgui.Text('Автор: Akionka')
-          imgui.Text('Версия: '..thisScript().version_num..' ('..thisScript().version..')')
+          imgui.Text('Версия: '..thisScript()['version_num']..' ('..thisScript()['version']..')')
           imgui.Text('Команды: /autotaker')
           if updatesAvaliable and imgui.Button('Скачать обновление', imgui.ImVec2(150, 0)) then
-            update('https://raw.githubusercontent.com/Akionka/autotaker/master/autotaker.lua')
+            update()
             mainWindowState.v = false
           end
           if not updatesAvaliable and imgui.Button('Проверить обновления', imgui.ImVec2(150, 0)) then
-            checkUpdates('https://raw.githubusercontent.com/Akionka/autotaker/master/version.json')
+            checkUpdates()
           end
           imgui.SameLine()
           if imgui.Button('Группа ВКонтакте', imgui.ImVec2(150, 0)) then os.execute('explorer "https://vk.com/akionkamods"') end
@@ -630,10 +633,10 @@ function main()
   end
 end
 
-function checkUpdates(json)
+function checkUpdates()
   local fpath = os.tmpname()
   if doesFileExist(fpath) then os.remove(fpath) end
-  downloadUrlToFile(json, fpath, function(_, status, _, _)
+  downloadUrlToFile('https://api.github.com/repos/akionka/'..thisScript()['name']..'/releases', fpath, function(_, status, _, _)
     if status == 58 then
       if doesFileExist(fpath) then
         local f = io.open(fpath, 'r')
@@ -641,9 +644,10 @@ function checkUpdates(json)
           local info = decodeJson(f: read('*a'))
           f:close()
           os.remove(fpath)
-          if info['version_num'] > thisScript()['version_num'] then
+          if v(info[1]['tag_name']) > v(thisScript()['version']) then
             updatesAvaliable = true
-            alert('Найдено объявление. Текущая версия: {9932cc}'..thisScript()['version']..'{FFFFFF}, новая версия: {9932cc}'..info['version']..'{FFFFFF}')
+            lastTagAvaliable = info[1]['tag_name']
+            alert('Найдено объявление. Текущая версия: {9932cc}'..thisScript()['version']..'{FFFFFF}, новая версия: {9932cc}'..info[0]['version']..'{FFFFFF}')
             return true
           else
             updatesAvaliable = false
@@ -658,8 +662,8 @@ function checkUpdates(json)
   end)
 end
 
-function update(url)
-  downloadUrlToFile(url, thisScript().path, function(_, status, _, _)
+function update()
+  downloadUrlToFile('https://github.com/akionka/'..thisScript()['name']..'/releases/download/'..lastTagAvaliable..'/autotaker.lua', thisScript()['path'], function(_, status, _, _)
     if status == 6 then
       alert('Новая версия установлена! Чтобы скрипт обновился нужно либо перезайти в игру, либо ...')
       alert('... если у вас есть автоперезагрузка скриптов, то новая версия уже готова и снизу вы увидите приветственное сообщение')
