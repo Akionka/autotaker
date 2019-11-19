@@ -1,13 +1,13 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.5.4')
-script_version_number(13)
+script_version('1.5.5')
+script_version_number(14)
 script_moonloader(27)
 
 require 'deps' {
   'fyp:samp-lua',
   'fyp:moon-imgui',
-  'kikito:semver'
+  'Akionka:lua-semver',
 }
 
 local sampev           = require 'lib.samp.events'
