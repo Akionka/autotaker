@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.5.5')
-script_version_number(14)
+script_version('1.5.6')
+script_version_number(15)
 script_moonloader(27)
 
 require 'deps' {
@@ -39,6 +39,7 @@ local defaultProfile = {
 
   police_items = {
     false, -- Бронежилет
+    false, -- Легкий бронежилет
     false, -- Прибор ночного видения
     false, -- Кобура
     false, -- Полицейский щит
@@ -64,6 +65,7 @@ local defaultProfile = {
 
   fbi_items = {
     false, -- Бронежилет
+    false, -- Легкий бронежилет
     false, -- Прибор ночного видения
     false, -- Кобура
     false, -- Полицейский щит
@@ -79,6 +81,7 @@ local defaultProfile = {
 
   army_items = {
     false, -- Бронежилет
+    false, -- Легкий бронежилет
     false, -- Прибор ночного видения
     false, -- Кобура
     false, -- Громкоговоритель
@@ -140,6 +143,7 @@ local tempBuffers     = {}
 local names = {
   police_items = {
     'Бронежилет',
+    'Легкий бронежилет',
     'Прибор ночного видения',
     'Кобура',
     'Полицейский щит',
@@ -165,6 +169,7 @@ local names = {
 
   fbi_items = {
     'Бронежилет',
+    'Легкий бронежилет',
     'Прибор ночного видения',
     'Кобура',
     'Полицейский щит',
@@ -180,6 +185,7 @@ local names = {
 
   army_items = {
     'Бронежилет',
+    'Легкий бронежилет',
     'Прибор ночного видения',
     'Кобура',
     'Громкоговоритель',
