@@ -504,7 +504,7 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
   if (id == 81 or id == 83) and data['settings']['active'] then
     if #orderList == 0 then
       locked = true
-      alert('Можете отходить от пикапа. В теченее следующих {9932cc}6 секунд{FFFFFF} он будет неактивен')
+      alert('Можете отходить от пикапа. В течение следующих {9932cc}6 секунд{FFFFFF} он будет неактивен')
       lua_thread.create(function()
         wait(6000)
         locked = false
