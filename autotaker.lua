@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.5.6')
-script_version_number(15)
+script_version('1.5.7')
+script_version_number(16)
 script_moonloader(27)
 
 require 'deps' {
@@ -44,6 +44,7 @@ local defaultProfile = {
     false, -- Кобура
     false, -- Полицейский щит
     false, -- Фонарик
+    false, -- Фотоаппарат
     false, -- Чёрный шлем SWAT
     false, -- Белый шлем SWAT
     false, -- Вязаная маска
@@ -70,6 +71,7 @@ local defaultProfile = {
     false, -- Кобура
     false, -- Полицейский щит
     false, -- Фонарик
+    false, -- Фотоаппарат
     false, -- Чёрный шлем SWAT
     false, -- Белый шлем SWAT
     false, -- Вязаная маска
@@ -148,6 +150,7 @@ local names = {
     'Кобура',
     'Полицейский щит',
     'Фонарик',
+    'Фотоаппарат',
     'Чёрный шлем SWAT',
     'Белый шлем SWAT',
     'Вязаная маска',
@@ -174,6 +177,7 @@ local names = {
     'Кобура',
     'Полицейский щит',
     'Фонарик',
+    'Фотоаппарат',
     'Чёрный шлем SWAT',
     'Белый шлем SWAT',
     'Вязаная маска',
