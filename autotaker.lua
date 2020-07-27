@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.5.7')
-script_version_number(16)
+script_version('1.6.0')
+script_version_number(17)
 script_moonloader(27)
 
 require 'deps' {
@@ -10,23 +10,23 @@ require 'deps' {
   'Akionka:lua-semver',
 }
 
-local sampev           = require 'lib.samp.events'
-local encoding         = require 'encoding'
-local imgui            = require 'imgui'
-local v                = require 'semver'
-
+local sampev = require 'lib.samp.events'
+local encoding = require 'encoding'
+local imgui = require 'imgui'
+local v = require 'semver'
+local inspect = require 'inspect'
 
 local updatesAvaliable = false
 local lastTagAvaliable = '1.0'
 
-encoding.default       = 'cp1251'
-local u8               = encoding.UTF8
+encoding.default = 'cp1251'
+local u8 = encoding.UTF8
 
-local prefix           = 'Autotaker'
-local close_next       = false
-local orderList        = {}
-local locked           = false
-encoding.default       = 'cp1251'
+local prefixes = {'police', 'fbi', 'army'}
+local close_next = false
+local orderList = {}
+local locked = false
+encoding.default = 'cp1251'
 u8 = encoding.UTF8
 
 local defaultProfile = {
@@ -38,89 +38,90 @@ local defaultProfile = {
   ]]
 
   police_items = {
-    false, -- Бронежилет
-    false, -- Легкий бронежилет
-    false, -- Прибор ночного видения
-    false, -- Кобура
-    false, -- Полицейский щит
-    false, -- Фонарик
-    false, -- Фотоаппарат
-    false, -- Чёрный шлем SWAT
-    false, -- Белый шлем SWAT
-    false, -- Вязаная маска
-    false, -- Очки «Police Black»
-    false, -- Очки «Police Red»
-    false, -- Очки «Police Blue»
-    false, -- Противогаз
-    false, -- Парадная фуражка
-    false, -- Офицерская фуражка
-    false, -- Черная полицейская каска
-    false, -- Синяя полицейская каска
-    false, -- Шлем патрульного
-    false, -- Полицейская кепка
-    false, -- Жезл регулировщика
-    false, -- Оранжевый жилет
-    false, -- Черная шляпа шерифа
-    false, -- Коричневая шляпа шерифа
+    armor = false,
+    larmor = false,
+    nightvision = false,
+    holster = false,
+    shield = false,
+    flashlight = false,
+    camera = false,
+    bhelmet = false,
+    whelmet = false,
+    mask = false,
+    blkglasses = false,
+    redglasses = false,
+    bluglasses = false,
+    gasmask = false,
+    ceremonialcap = false,
+    officercap = false,
+    blkphelmet = false,
+    bluphelmet = false,
+    phelmet = false,
+    pcap = false,
+    stick = false,
+    vest = false,
+    blkhat = false,
+    brnhat = false,
   },
 
   fbi_items = {
-    false, -- Бронежилет
-    false, -- Легкий бронежилет
-    false, -- Прибор ночного видения
-    false, -- Кобура
-    false, -- Полицейский щит
-    false, -- Фонарик
-    false, -- Фотоаппарат
-    false, -- Чёрный шлем SWAT
-    false, -- Белый шлем SWAT
-    false, -- Вязаная маска
-    false, -- Очки «Police Black»
-    false, -- Очки «Police Red»
-    false, -- Очки «Police Blue»
-    false, -- Противогаз
+    armor = false,
+    larmor = false,
+    nightvision = false,
+    holster = false,
+    shield = false,
+    flashlight = false,
+    camera = false,
+    bhelmet = false,
+    whelmet = false,
+    mask = false,
+    blkglasses = false,
+    redglasses = false,
+    bluglasses = false,
+    gasmask = false,
   },
 
   army_items = {
-    false, -- Бронежилет
-    false, -- Легкий бронежилет
-    false, -- Прибор ночного видения
-    false, -- Кобура
-    false, -- Громкоговоритель
-    false, -- Берет «Army»
-    false, -- Берет «Krap»
-    false, -- Берет «Desant»
+    armor = false,
+    larmor = false,
+    nightvision = false,
+    holster = false,
+    loudspeaker = false,
+    bereta = false,
+    beretk = false,
+    beretd = false,
   },
 
   police_guns = {
-    false, -- Дубинка
-    false, -- M4
-    false, -- MP5
-    false, -- Дробовик
-    false, -- Винтовка
-    false, -- Desert Eagle
-    false, -- Дымовая шашка
+    stick = false,
+    m4 = false,
+    mp5 = false,
+    shotgun = false,
+    rifle = false,
+    deagle = false,
+    smkbomb = false,
   },
 
   fbi_guns = {
-    false, -- Tazer
-    false, -- M4
-    false, -- MP5
-    false, -- Desert Eagle
-    false, -- Винтовка
-    false, -- Дробовик
-    false, -- Снайперская винтовка
-    false, -- Обрез
-    false, -- Дымовая шашка
+    stick = false,
+    m4 = false,
+    mp5 = false,
+    shotgun = false,
+    rifle = false,
+    deagle = false,
+    srifle = false,
+    sawnoff = false,
+    grenades = false,
+    smkbomb = false,
   },
 
   army_guns = {
-    false, -- M4
-    false, -- MP5
-    false, -- Desert Eagle
-    false, -- Винтовка
-    false, -- Дробовик
-    false, -- Дымовая шашка
+    m4 = false,
+    mp5 = false,
+    deagle = false,
+    rifle = false,
+    shotgun = false,
+    smkbomb = false,
   },
 }
 
@@ -142,92 +143,142 @@ local selectedProfile = 1
 local selectedTab     = 1
 local tempBuffers     = {}
 
+-- Список названий всех возможных предметов и оружия
+-- Ключ - внутрений ID предмета, значение - его название в ImGui диалоге
 local names = {
+  items = {
+    armor = 'Бронежилет',
+    larmor = 'Легкий бронежилет',
+    nightvision = 'Прибор ночного видения',
+    holster = 'Кобура',
+    shield = 'Полицейский щит',
+    flashlight ='Фонарик',
+    camera = 'Фотоаппарат',
+    bhelmet = 'Чёрный шлем SWAT',
+    whelmet ='Белый шлем SWAT',
+    mask = 'Вязаная маска',
+    blkglasses = 'Очки «Police Black»',
+    redglasses = 'Очки «Police Red»',
+    bluglasses = 'Очки «Police Blue»',
+    gasmask = 'Противогаз',
+    ceremonialcap = 'Парадная фуражка',
+    officercap = 'Офицерская фуражка',
+    blkphelmet = 'Черная полицейская каска',
+    bluphelmet = 'Синяя полицейская каска',
+    phelmet = 'Шлем патрульного',
+    pcap = 'Полицейская кепка',
+    stick = 'Жезл регулировщика',
+    vest = 'Оранжевый жилет',
+    blkhat = 'Черная шляпа шерифа',
+    brnhat = 'Коричневая шляпа шерифа',
+    loudspeaker = 'Громкоговоритель',
+    bereta = 'Берет «Army»',
+    beretk = 'Берет «Krap»',
+    beretd = 'Берет «Desant»',
+  },
+
+  guns = {
+    stick = 'Дубинка',
+    m4 = 'M4',
+    mp5 = 'MP5',
+    shotgun = 'Shotgun',
+    rifle = 'Rifle',
+    deagle = 'Desert Eagle',
+    srifle = 'Снайперская винтовка',
+    sawnoff = 'Обрез',
+    grenades = 'Гранаты',
+    smkbomb = 'Дымовая шашка',
+  },
+}
+
+-- То, как предметы расставлены в серверных диалогах
+-- Значение - внутрений ID предмета
+local lists = {
   police_items = {
-    'Бронежилет',
-    'Легкий бронежилет',
-    'Прибор ночного видения',
-    'Кобура',
-    'Полицейский щит',
-    'Фонарик',
-    'Фотоаппарат',
-    'Чёрный шлем SWAT',
-    'Белый шлем SWAT',
-    'Вязаная маска',
-    'Очки «Police Black»',
-    'Очки «Police Red»',
-    'Очки «Police Blue»',
-    'Противогаз',
-    'Парадная фуражка',
-    'Офицерская фуражка',
-    'Черная полицейская каска',
-    'Синяя полицейская каска',
-    'Шлем патрульного',
-    'Полицейская кепка',
-    'Жезл регулировщика',
-    'Оранжевый жилет',
-    'Черная шляпа шерифа',
-    'Коричневая шляпа шерифа',
+    'armor',
+    'larmor',
+    'nightvision',
+    'holster',
+    'shield',
+    'flashlight',
+    'camera',
+    'bhelmet',
+    'whelmet',
+    'mask',
+    'blkglasses',
+    'redglasses',
+    'bluglasses',
+    'gasmask',
+    'ceremonialcap',
+    'officercap',
+    'blkphelmet',
+    'bluphelmet',
+    'phelmet',
+    'pcap',
+    'stick',
+    'vest',
+    'blkhat',
+    'brnhat',
   },
 
   fbi_items = {
-    'Бронежилет',
-    'Легкий бронежилет',
-    'Прибор ночного видения',
-    'Кобура',
-    'Полицейский щит',
-    'Фонарик',
-    'Фотоаппарат',
-    'Чёрный шлем SWAT',
-    'Белый шлем SWAT',
-    'Вязаная маска',
-    'Очки «Police Black»',
-    'Очки «Police Red»',
-    'Очки «Police Blue»',
-    'Противогаз',
+    'armor',
+    'larmor',
+    'nightvision',
+    'holster',
+    'shield',
+    'flashlight',
+    'camera',
+    'bhelmet',
+    'whelmet',
+    'mask',
+    'blkglasses',
+    'redglasses',
+    'bluglasses',
+    'gasmask',
   },
 
   army_items = {
-    'Бронежилет',
-    'Легкий бронежилет',
-    'Прибор ночного видения',
-    'Кобура',
-    'Громкоговоритель',
-    'Берет «Army»',
-    'Берет «Krap»',
-    'Берет «Desant»',
+    'armor',
+    'larmor',
+    'nightvision',
+    'holster',
+    'loudspeaker',
+    'bereta',
+    'beretk',
+    'beretd',
   },
 
   police_guns = {
-    'Дубинка',
-    'M4',
-    'MP5',
-    'Shotgun',
-    'Rifle',
-    'Desert Eagle',
-    'Дымовая шашка',
+    'stick',
+    'm4',
+    'mp5',
+    'shotgun',
+    'rifle',
+    'deagle',
+    'smkbomb',
   },
 
   fbi_guns = {
-    'Дубинка',
-    'M4',
-    'MP5',
-    'Shotgun',
-    'Rifle',
-    'Desert Eagle',
-    'Снайперская винтовка',
-    'Обрез',
-    'Гранаты',
-    'Дымовая шашка',
+    'stick',
+    'm4',
+    'mp5',
+    'shotgun',
+    'rifle',
+    'deagle',
+    'rifle',
+    'sawnoff',
+    'grenades',
+    'smkbomb',
   },
 
   army_guns = {
-    'M4',
-    'MP5',
-    'Desert Eagle',
-    'Rifle',
-    'Shotgun',
-    'Дымовая шашка',
+    'm4',
+    'mp5',
+    'deagle',
+    'rifle',
+    'shotgun',
+    'smkbomb',
   },
 }
 
@@ -337,25 +388,25 @@ function imgui.OnDrawFrame()
         imgui.BeginChild('Weapons', imgui.ImVec2(145, 0), true)
           if selectedProfile ~= 0 then
             if typescriptwork.v == 0 then
-              for k, v in pairs(data['profiles'][selectedProfile]['police_guns']) do
-                if imgui.Selectable(names['police_guns'][k], data['profiles'][selectedProfile]['police_guns'][k]) then
-                  data['profiles'][selectedProfile]['police_guns'][k] = not data['profiles'][selectedProfile]['police_guns'][k]
+              for k, v in pairs(lists.police_guns) do
+                if imgui.Selectable(names['guns'][v], data['profiles'][selectedProfile]['police_guns'][v]) then
+                  data['profiles'][selectedProfile]['police_guns'][v] = not data['profiles'][selectedProfile]['police_guns'][v]
                   saveData()
                 end
               end
 
             elseif typescriptwork.v == 1 then
-              for k, v in pairs(data['profiles'][selectedProfile]['fbi_guns']) do
-                if imgui.Selectable(names['fbi_guns'][k], data['profiles'][selectedProfile]['fbi_guns'][k]) then
-                  data['profiles'][selectedProfile]['fbi_guns'][k] = not data['profiles'][selectedProfile]['fbi_guns'][k]
+              for k, v in pairs(lists.fbi_guns) do
+                if imgui.Selectable(names['guns'][v], data['profiles'][selectedProfile]['fbi_guns'][v]) then
+                  data['profiles'][selectedProfile]['fbi_guns'][v] = not data['profiles'][selectedProfile]['fbi_guns'][v]
                   saveData()
                 end
               end
 
             elseif typescriptwork.v == 2 then
-              for k, v in pairs(data['profiles'][selectedProfile]['army_guns']) do
-                if imgui.Selectable(names['army_guns'][k], data['profiles'][selectedProfile]['army_guns'][k]) then
-                  data['profiles'][selectedProfile]['army_guns'][k] = not data['profiles'][selectedProfile]['army_guns'][k]
+              for k, v in pairs(lists.army_guns) do
+                if imgui.Selectable(names['guns'][v], data['profiles'][selectedProfile]['army_guns'][v]) then
+                  data['profiles'][selectedProfile]['army_guns'][v] = not data['profiles'][selectedProfile]['army_guns'][v]
                   saveData()
                 end
               end
@@ -368,25 +419,25 @@ function imgui.OnDrawFrame()
         imgui.BeginChild('Items', imgui.ImVec2(0, 0), true)
           if selectedProfile ~= 0 then
             if typescriptwork.v == 0 then
-              for k, v in pairs(data['profiles'][selectedProfile]['police_items']) do
-                if imgui.Selectable(names['police_items'][k], data['profiles'][selectedProfile]['police_items'][k]) then
-                  data['profiles'][selectedProfile]['police_items'][k] = not data['profiles'][selectedProfile]['police_items'][k]
+              for k, v in pairs(lists.police_items) do
+                if imgui.Selectable(names['items'][v], data['profiles'][selectedProfile]['police_items'][v]) then
+                  data['profiles'][selectedProfile]['police_items'][v] = not data['profiles'][selectedProfile]['police_items'][v]
                   saveData()
                 end
               end
 
             elseif typescriptwork.v == 1 then
-              for k, v in pairs(data['profiles'][selectedProfile]['fbi_items']) do
-                if imgui.Selectable(names['fbi_items'][k], data['profiles'][selectedProfile]['fbi_items'][k]) then
-                  data['profiles'][selectedProfile]['fbi_items'][k] = not data['profiles'][selectedProfile]['fbi_items'][k]
+              for k, v in pairs(lists.fbi_items) do
+                if imgui.Selectable(names['items'][v], data['profiles'][selectedProfile]['fbi_items'][v]) then
+                  data['profiles'][selectedProfile]['fbi_items'][v] = not data['profiles'][selectedProfile]['fbi_items'][v]
                   saveData()
                 end
               end
 
             elseif typescriptwork.v == 2 then
-              for k, v in pairs(data['profiles'][selectedProfile]['army_items']) do
-                if imgui.Selectable(names['army_items'][k], data['profiles'][selectedProfile]['army_items'][k]) then
-                  data['profiles'][selectedProfile]['army_items'][k] = not data['profiles'][selectedProfile]['army_items'][k]
+              for k, v in pairs(lists.army_items) do
+                if imgui.Selectable(names['items'][v], data['profiles'][selectedProfile]['army_items'][v]) then
+                  data['profiles'][selectedProfile]['army_items'][v] = not data['profiles'][selectedProfile]['army_items'][v]
                   saveData()
                 end
               end
@@ -443,68 +494,33 @@ end
 
 function sampev.onSendPickedUpPickup(id)
   local pickup = sampGetPickupHandleBySampId(id)
-  local pickuppoolPtr = sampGetPickupPoolPtr(id)
-
+  local pickuppoolPtr = sampGetPickupPoolPtr()
 
   -- Доп. снаряжение
   if get_pickup_model(id, pickup) == 1242 then
     if locked then return false end
-    if #orderList == 0 then
-      if data['profiles'][selectedProfile]['typescriptwork'] == 0 then
-        for k, v in pairs(data['profiles'][selectedProfile]['police_items']) do
-          if v then
-            table.insert(orderList, k)
-          end
-        end
-      end
-      if data['profiles'][selectedProfile]['typescriptwork'] == 1 then
-        for k, v in pairs(data['profiles'][selectedProfile]['fbi_items']) do
-          if v then
-            table.insert(orderList, k)
-          end
-        end
-      end
-      if data['profiles'][selectedProfile]['typescriptwork'] == 2 then
-        for k, v in pairs(data['profiles'][selectedProfile]['army_items']) do
-          if v then
-            table.insert(orderList, k)
-          end
-        end
+    if #orderList ~= 0 then return end
+    for k, v in pairs(data['profiles'][selectedProfile][getPrefix() .. '_items']) do
+      if v then
+        local i = searchForItem(lists[getPrefix() .. '_items'], k)
+        table.insert(orderList, i - 1)
       end
     end
   end
 
   -- Оружейная
   if get_pickup_model(id, pickup) == 2061 then
-    if #orderList == 0 then
-      if data['profiles'][selectedProfile]['typescriptwork'] == 0 then
-        for k, v in pairs(data['profiles'][selectedProfile]['police_guns']) do
-          if v then
-            table.insert(orderList, k - 1)
-          end
-        end
-      end
-      if data['profiles'][selectedProfile]['typescriptwork'] == 1 then
-        for k, v in pairs(data['profiles'][selectedProfile]['fbi_guns']) do
-          if v then
-            table.insert(orderList, k - 1)
-          end
-        end
-      end
-      if data['profiles'][selectedProfile]['typescriptwork'] == 2 then
-        for k, v in pairs(data['profiles'][selectedProfile]['army_guns']) do
-          if v then
-            table.insert(orderList, k - 1)
-          end
-        end
+    if #orderList ~= 0 then return end
+    for k, v in pairs(data['profiles'][selectedProfile][getPrefix() .. '_guns']) do
+      if v then
+        local i = searchForItem(lists[getPrefix() .. '_guns'], k)
+        table.insert(orderList, i - 1)
       end
     end
   end
 end
 
 function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
-  -- alert(id..'|'..u8:encode(title))
-
   if (id == 81 or id == 83) and data['settings']['active'] then
     if #orderList == 0 then
       locked = true
@@ -537,12 +553,14 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
   if (id == 76 or id == 77 or id == 78) and data['settings']['active'] then
     for k, v in pairs(orderList) do
       if v then
+        print(orderList[1])
         sampSendDialogResponse(id, 1, orderList[1], '')
         table.remove(orderList, 1)
         return false
       end
     end
   end
+  return {id, stytle, title .. ' | ' .. id, btn1, btn2, text}
 end
 
 function applyCustomStyle()
@@ -550,71 +568,65 @@ function applyCustomStyle()
   local style  = imgui.GetStyle()
   local colors = style.Colors
   local clr    = imgui.Col
-  local ImVec4 = imgui.ImVec4
+  local function ImVec4(color)
+    local r = bit.band(bit.rshift(color, 24), 0xFF)
+    local g = bit.band(bit.rshift(color, 16), 0xFF)
+    local b = bit.band(bit.rshift(color, 8), 0xFF)
+    local a = bit.band(color, 0xFF)
+    return imgui.ImVec4(r/255, g/255, b/255, a/255)
+  end
 
-  -- style.FrameBorderSize  = 1.0
-  style.WindowTitleAlign    = imgui.ImVec2(0.5, 0.5)
-  style.FramePadding        = imgui.ImVec2(4.0, 2.0)
-  style.ItemSpacing         = imgui.ImVec2(8.0, 2.0)
-  -- style.WindowBorderSize = 1.0
-  -- style.TabBorderSize       = 1.0
-  style.WindowRounding      = 1.0
-  -- style.ChildRounding    = 1.0
-  style.FrameRounding       = 1.0
-  style.ScrollbarRounding   = 1.0
-  style.GrabRounding        = 1.0
-  -- style.TabRounding      = 1.0
+  style['WindowRounding']      = 10.0
+  style['WindowTitleAlign']    = imgui.ImVec2(0.5, 0.5)
+  style['ChildWindowRounding'] = 5.0
+  style['FrameRounding']       = 5.0
+  style['ItemSpacing']         = imgui.ImVec2(5.0, 5.0)
+  style['ScrollbarSize']       = 13.0
+  style['ScrollbarRounding']   = 5
 
-  colors[clr.Text]                  = ImVec4(1.00, 1.00, 1.00, 0.95)
-  colors[clr.TextDisabled]          = ImVec4(0.50, 0.50, 0.50, 1.00)
-  colors[clr.WindowBg]              = ImVec4(0.13, 0.12, 0.12, 1.00)
-  -- colors[clr.ChildBg]               = ImVec4(1.00, 1.00, 1.00, 0.00)
-  colors[clr.PopupBg]               = ImVec4(0.05, 0.05, 0.05, 0.94)
-  colors[clr.Border]                = ImVec4(0.53, 0.53, 0.53, 0.46)
-  colors[clr.BorderShadow]          = ImVec4(0.00, 0.00, 0.00, 0.00)
-  colors[clr.FrameBg]               = ImVec4(0.00, 0.00, 0.00, 0.85)
-  colors[clr.FrameBgHovered]        = ImVec4(0.22, 0.22, 0.22, 0.40)
-  colors[clr.FrameBgActive]         = ImVec4(0.16, 0.16, 0.16, 0.53)
-  colors[clr.TitleBg]               = ImVec4(0.00, 0.00, 0.00, 1.00)
-  colors[clr.TitleBgActive]         = ImVec4(0.00, 0.00, 0.00, 1.00)
-  colors[clr.TitleBgCollapsed]      = ImVec4(0.00, 0.00, 0.00, 0.51)
-  colors[clr.MenuBarBg]             = ImVec4(0.12, 0.12, 0.12, 1.00)
-  colors[clr.ScrollbarBg]           = ImVec4(0.02, 0.02, 0.02, 0.53)
-  colors[clr.ScrollbarGrab]         = ImVec4(0.31, 0.31, 0.31, 1.00)
-  colors[clr.ScrollbarGrabHovered]  = ImVec4(0.41, 0.41, 0.41, 1.00)
-  colors[clr.ScrollbarGrabActive]   = ImVec4(0.48, 0.48, 0.48, 1.00)
-  colors[clr.CheckMark]             = ImVec4(0.79, 0.79, 0.79, 1.00)
-  colors[clr.SliderGrab]            = ImVec4(0.48, 0.47, 0.47, 0.91)
-  colors[clr.SliderGrabActive]      = ImVec4(0.56, 0.55, 0.55, 0.62)
-  colors[clr.Button]                = ImVec4(0.50, 0.50, 0.50, 0.63)
-  colors[clr.ButtonHovered]         = ImVec4(0.67, 0.67, 0.68, 0.63)
-  colors[clr.ButtonActive]          = ImVec4(0.26, 0.26, 0.26, 0.63)
-  colors[clr.Header]                = ImVec4(0.54, 0.54, 0.54, 0.58)
-  colors[clr.HeaderHovered]         = ImVec4(0.64, 0.65, 0.65, 0.80)
-  colors[clr.HeaderActive]          = ImVec4(0.25, 0.25, 0.25, 0.80)
-  colors[clr.Separator]             = ImVec4(0.58, 0.58, 0.58, 0.50)
-  colors[clr.SeparatorHovered]      = ImVec4(0.81, 0.81, 0.81, 0.64)
-  colors[clr.SeparatorActive]       = ImVec4(0.81, 0.81, 0.81, 0.64)
-  colors[clr.ResizeGrip]            = ImVec4(0.87, 0.87, 0.87, 0.53)
-  colors[clr.ResizeGripHovered]     = ImVec4(0.87, 0.87, 0.87, 0.74)
-  colors[clr.ResizeGripActive]      = ImVec4(0.87, 0.87, 0.87, 0.74)
-  -- colors[clr.Tab]                   = ImVec4(0.01, 0.01, 0.01, 0.86)
-  -- colors[clr.TabHovered]            = ImVec4(0.29, 0.29, 0.29, 1.00)
-  -- colors[clr.TabActive]             = ImVec4(0.31, 0.31, 0.31, 1.00)
-  -- colors[clr.TabUnfocused]          = ImVec4(0.02, 0.02, 0.02, 1.00)
-  -- colors[clr.TabUnfocusedActive]    = ImVec4(0.19, 0.19, 0.19, 1.00)
-  -- colors[clr.DockingPreview]        = ImVec4(0.38, 0.48, 0.60, 1.00)
-  -- colors[clr.DockingEmptyBg]        = ImVec4(0.20, 0.20, 0.20, 1.00)
-  colors[clr.PlotLines]             = ImVec4(0.61, 0.61, 0.61, 1.00)
-  colors[clr.PlotLinesHovered]      = ImVec4(0.68, 0.68, 0.68, 1.00)
-  colors[clr.PlotHistogram]         = ImVec4(0.90, 0.77, 0.33, 1.00)
-  colors[clr.PlotHistogramHovered]  = ImVec4(0.87, 0.55, 0.08, 1.00)
-  colors[clr.TextSelectedBg]        = ImVec4(0.47, 0.60, 0.76, 0.47)
-  -- colors[clr.DragDropTarget]        = ImVec4(0.58, 0.58, 0.58, 0.90)
-  -- colors[clr.NavHighlight]          = ImVec4(0.60, 0.60, 0.60, 1.00)
-  -- colors[clr.NavWindowingHighlight] = ImVec4(1.00, 1.00, 1.00, 0.70)
-  -- colors[clr.NavWindowingDimBg]     = ImVec4(0.80, 0.80, 0.80, 0.20)
-  -- colors[clr.ModalWindowDimBg]      = ImVec4(0.80, 0.80, 0.80, 0.35)
+  colors[clr['Text']]                 = ImVec4(0xFFFFFFFF)
+  colors[clr['TextDisabled']]         = ImVec4(0x212121FF)
+  colors[clr['WindowBg']]             = ImVec4(0x212121FF)
+  colors[clr['ChildWindowBg']]        = ImVec4(0x21212180)
+  colors[clr['PopupBg']]              = ImVec4(0x212121FF)
+  colors[clr['Border']]               = ImVec4(0xFFFFFF10)
+  colors[clr['BorderShadow']]         = ImVec4(0x21212100)
+  colors[clr['FrameBg']]              = ImVec4(0xC3E88D90)
+  colors[clr['FrameBgHovered']]       = ImVec4(0xC3E88DFF)
+  colors[clr['FrameBgActive']]        = ImVec4(0x61616150)
+  colors[clr['TitleBg']]              = ImVec4(0x212121FF)
+  colors[clr['TitleBgActive']]        = ImVec4(0x212121FF)
+  colors[clr['TitleBgCollapsed']]     = ImVec4(0x212121FF)
+  colors[clr['MenuBarBg']]            = ImVec4(0x21212180)
+  colors[clr['ScrollbarBg']]          = ImVec4(0x212121FF)
+  colors[clr['ScrollbarGrab']]        = ImVec4(0xEEFFFF20)
+  colors[clr['ScrollbarGrabHovered']] = ImVec4(0xEEFFFF10)
+  colors[clr['ScrollbarGrabActive']]  = ImVec4(0x80CBC4FF)
+  colors[clr['ComboBg']]              = colors[clr['PopupBg']]
+  colors[clr['CheckMark']]            = ImVec4(0x212121FF)
+  colors[clr['SliderGrab']]           = ImVec4(0x212121FF)
+  colors[clr['SliderGrabActive']]     = ImVec4(0x80CBC4FF)
+  colors[clr['Button']]               = ImVec4(0xC3E88D90)
+  colors[clr['ButtonHovered']]        = ImVec4(0xC3E88DFF)
+  colors[clr['ButtonActive']]         = ImVec4(0x61616150)
+  colors[clr['Header']]               = ImVec4(0x151515FF)
+  colors[clr['HeaderHovered']]        = ImVec4(0x252525FF)
+  colors[clr['HeaderActive']]         = ImVec4(0x303030FF)
+  colors[clr['Separator']]            = colors[clr['Border']]
+  colors[clr['SeparatorHovered']]     = ImVec4(0x212121FF)
+  colors[clr['SeparatorActive']]      = ImVec4(0x212121FF)
+  colors[clr['ResizeGrip']]           = ImVec4(0x212121FF)
+  colors[clr['ResizeGripHovered']]    = ImVec4(0x212121FF)
+  colors[clr['ResizeGripActive']]     = ImVec4(0x212121FF)
+  colors[clr['CloseButton']]          = ImVec4(0x212121FF)
+  colors[clr['CloseButtonHovered']]   = ImVec4(0xD41223FF)
+  colors[clr['CloseButtonActive']]    = ImVec4(0xD41223FF)
+  colors[clr['PlotLines']]            = ImVec4(0x212121FF)
+  colors[clr['PlotLinesHovered']]     = ImVec4(0x212121FF)
+  colors[clr['PlotHistogram']]        = ImVec4(0x212121FF)
+  colors[clr['PlotHistogramHovered']] = ImVec4(0x212121FF)
+  colors[clr['TextSelectedBg']]       = ImVec4(0x212121FF)
+  colors[clr['ModalWindowDarkening']] = ImVec4(0x21212180)
 end
 
 function main()
@@ -630,7 +642,7 @@ function main()
   print(u8:decode('{FFFFFF}Приятного использования! :)'))
 
   if data['settings']['alwaysAutoCheckUpdates'] then
-    checkUpdates('https://raw.githubusercontent.com/Akionka/autotaker/master/version.json')
+    checkUpdates()
   end
 
   sampRegisterChatCommand('autotaker', function()
@@ -695,7 +707,7 @@ function loadData()
   data = decodeJson(configFile:read('*a'))
   configFile:close()
 
-  active.v         = data['settings']['active'] or false
+  active.v = data['settings']['active'] or false
   selectedProfile  = data['settings']['selectedProfile'] or 1
 
   if selectedProfile == 0 then return end
@@ -713,5 +725,16 @@ function saveData()
 end
 
 function alert(text)
-  sampAddChatMessage(u8:decode('['..prefix..']: '..text), -1)
+  local prefix = 'Autotaker'
+  sampAddChatMessage(u8:decode('[' .. prefix .. ']: ' .. text), -1)
+end
+
+function searchForItem(table, item)
+  for i, v in ipairs(table) do
+    if v == item then return i end
+  end
+end
+
+function getPrefix()
+  return prefixes[data['profiles'][selectedProfile]['typescriptwork'] + 1]
 end
