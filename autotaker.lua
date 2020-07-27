@@ -90,6 +90,7 @@ local defaultProfile = {
     bereta = false,
     beretk = false,
     beretd = false,
+    bshield = false,
   },
 
   police_guns = {
@@ -175,6 +176,7 @@ local names = {
     bereta = 'Берет «Army»',
     beretk = 'Берет «Krap»',
     beretd = 'Берет «Desant»',
+    bshield = 'Баллистический щит',
   },
 
   guns = {
@@ -247,6 +249,7 @@ local lists = {
     'bereta',
     'beretk',
     'beretd',
+    'bshield',
   },
 
   police_guns = {
@@ -553,7 +556,6 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
   if (id == 76 or id == 77 or id == 78) and data['settings']['active'] then
     for k, v in pairs(orderList) do
       if v then
-        print(orderList[1])
         sampSendDialogResponse(id, 1, orderList[1], '')
         table.remove(orderList, 1)
         return false
