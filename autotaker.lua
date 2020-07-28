@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.6.0')
-script_version_number(17)
+script_version('1.7.0')
+script_version_number(18)
 script_moonloader(27)
 
 require 'deps' {
@@ -14,7 +14,6 @@ local sampev = require 'lib.samp.events'
 local encoding = require 'encoding'
 local imgui = require 'imgui'
 local v = require 'semver'
-local inspect = require 'inspect'
 
 local updatesAvaliable = false
 local lastTagAvaliable = '1.0'
@@ -22,7 +21,13 @@ local lastTagAvaliable = '1.0'
 encoding.default = 'cp1251'
 local u8 = encoding.UTF8
 
-local prefixes = {'police', 'fbi', 'army', 'gov'}
+local prefixesByColor = {
+  [0xFF2A51E2] = 'police',
+  [0xFF4422FF] = 'fbi',
+  [0xFF33AA33] = 'army',
+  [0xFF4682B4] = 'gov',
+}
+local prefixesByTypeScriptWork = {'police','fbi','army','gov'}
 local close_next = false
 local orderList = {}
 local locked = false
@@ -145,9 +150,9 @@ local defaultProfile = {
 
 local data = {
   settings = {
-    active                 = false,
+    active = false,
     alwaysAutoCheckUpdates = true,
-    selectedProfile        = 1,
+    selectedProfile = 1,
   },
   profiles = {
     defaultProfile,
@@ -155,11 +160,11 @@ local data = {
 }
 
 local mainWindowState = imgui.ImBool(false)
-local active          = imgui.ImBool(false)
+local active = imgui.ImBool(false)
 local typescriptwork  = imgui.ImInt(0)
 local selectedProfile = 1
-local selectedTab     = 1
-local tempBuffers     = {}
+local selectedTab = 1
+local tempBuffers = {}
 
 -- Список названий всех возможных предметов и оружия
 -- Ключ - внутрений ID предмета, значение - его название в ImGui диалоге
@@ -414,7 +419,7 @@ function imgui.OnDrawFrame()
         if selectedProfile ~= 0 then
           imgui.Text('Режим работы')
           imgui.PushItemWidth(145)
-          if imgui.ListBox('', typescriptwork, {'Police', 'FBI', 'Army'}, imgui.ImInt(3)) then
+          if imgui.ListBox('', typescriptwork, {'Police', 'FBI', 'Army', 'Goverment'}, imgui.ImInt(4)) then
             data['profiles'][selectedProfile]['typescriptwork'] = typescriptwork.v
             saveData()
           end
@@ -425,28 +430,10 @@ function imgui.OnDrawFrame()
       imgui.BeginGroup()
         imgui.BeginChild('Weapons', imgui.ImVec2(145, 0), true)
           if selectedProfile ~= 0 then
-            if typescriptwork.v == 0 then
-              for k, v in pairs(lists.police_guns) do
-                if imgui.Selectable(names['guns'][v], data['profiles'][selectedProfile]['police_guns'][v]) then
-                  data['profiles'][selectedProfile]['police_guns'][v] = not data['profiles'][selectedProfile]['police_guns'][v]
-                  saveData()
-                end
-              end
-
-            elseif typescriptwork.v == 1 then
-              for k, v in pairs(lists.fbi_guns) do
-                if imgui.Selectable(names['guns'][v], data['profiles'][selectedProfile]['fbi_guns'][v]) then
-                  data['profiles'][selectedProfile]['fbi_guns'][v] = not data['profiles'][selectedProfile]['fbi_guns'][v]
-                  saveData()
-                end
-              end
-
-            elseif typescriptwork.v == 2 then
-              for k, v in pairs(lists.army_guns) do
-                if imgui.Selectable(names['guns'][v], data['profiles'][selectedProfile]['army_guns'][v]) then
-                  data['profiles'][selectedProfile]['army_guns'][v] = not data['profiles'][selectedProfile]['army_guns'][v]
-                  saveData()
-                end
+            for k, v in pairs(lists[getPrefixByTypeScriptWork() .. '_guns']) do
+              if imgui.Selectable(names['guns'][v], data['profiles'][selectedProfile][getPrefixByTypeScriptWork() .. '_guns'][v]) then
+                data['profiles'][selectedProfile][getPrefixByTypeScriptWork() .. '_guns'][v] = not data['profiles'][selectedProfile][getPrefixByTypeScriptWork() .. '_guns'][v]
+                saveData()
               end
             end
           end
@@ -456,28 +443,10 @@ function imgui.OnDrawFrame()
       imgui.BeginGroup()
         imgui.BeginChild('Items', imgui.ImVec2(0, 0), true)
           if selectedProfile ~= 0 then
-            if typescriptwork.v == 0 then
-              for k, v in pairs(lists.police_items) do
-                if imgui.Selectable(names['items'][v], data['profiles'][selectedProfile]['police_items'][v]) then
-                  data['profiles'][selectedProfile]['police_items'][v] = not data['profiles'][selectedProfile]['police_items'][v]
-                  saveData()
-                end
-              end
-
-            elseif typescriptwork.v == 1 then
-              for k, v in pairs(lists.fbi_items) do
-                if imgui.Selectable(names['items'][v], data['profiles'][selectedProfile]['fbi_items'][v]) then
-                  data['profiles'][selectedProfile]['fbi_items'][v] = not data['profiles'][selectedProfile]['fbi_items'][v]
-                  saveData()
-                end
-              end
-
-            elseif typescriptwork.v == 2 then
-              for k, v in pairs(lists.army_items) do
-                if imgui.Selectable(names['items'][v], data['profiles'][selectedProfile]['army_items'][v]) then
-                  data['profiles'][selectedProfile]['army_items'][v] = not data['profiles'][selectedProfile]['army_items'][v]
-                  saveData()
-                end
+            for k, v in pairs(lists[getPrefixByTypeScriptWork() .. '_items']) do
+              if imgui.Selectable(names['items'][v], data['profiles'][selectedProfile][getPrefixByTypeScriptWork() .. '_items'][v]) then
+                data['profiles'][selectedProfile][getPrefixByTypeScriptWork() .. '_items'][v] = not data['profiles'][selectedProfile][getPrefixByTypeScriptWork() .. '_items'][v]
+                saveData()
               end
             end
           end
@@ -534,13 +503,15 @@ function sampev.onSendPickedUpPickup(id)
   local pickup = sampGetPickupHandleBySampId(id)
   local pickuppoolPtr = sampGetPickupPoolPtr()
 
+  if getPrefixByPlayerColor == nil then return true end
+
   -- Доп. снаряжение
   if get_pickup_model(id, pickup) == 1242 then
     if locked then return false end
     if #orderList ~= 0 then return end
-    for k, v in pairs(data['profiles'][selectedProfile][getPrefix() .. '_items']) do
+    for k, v in pairs(data['profiles'][selectedProfile][getPrefixByPlayerColor() .. '_items']) do
       if v then
-        local i = searchForItem(lists[getPrefix() .. '_items'], k)
+        local i = searchForItem(lists[getPrefixByPlayerColor() .. '_items'], k)
         table.insert(orderList, i - 1)
       end
     end
@@ -549,9 +520,9 @@ function sampev.onSendPickedUpPickup(id)
   -- Оружейная
   if get_pickup_model(id, pickup) == 2061 then
     if #orderList ~= 0 then return end
-    for k, v in pairs(data['profiles'][selectedProfile][getPrefix() .. '_guns']) do
+    for k, v in pairs(data['profiles'][selectedProfile][getPrefixByPlayerColor() .. '_guns']) do
       if v then
-        local i = searchForItem(lists[getPrefix() .. '_guns'], k)
+        local i = searchForItem(lists[getPrefixByPlayerColor() .. '_guns'], k)
         table.insert(orderList, i - 1)
       end
     end
@@ -597,7 +568,6 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
       end
     end
   end
-  return {id, stytle, title .. ' | ' .. id, btn1, btn2, text}
 end
 
 function applyCustomStyle()
@@ -772,6 +742,12 @@ function searchForItem(table, item)
   end
 end
 
-function getPrefix()
+function getPrefixByPlayerColor()
+  local res, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
+  local color = sampGetPlayerColor(id)
+  return prefixesByColor[color]
+end
+
+function getPrefixByTypeScriptWork()
   return prefixes[data['profiles'][selectedProfile]['typescriptwork'] + 1]
 end
