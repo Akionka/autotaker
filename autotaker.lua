@@ -1,7 +1,7 @@
 script_name('AutoTaker')
 script_author('akionka')
-script_version('1.7.0')
-script_version_number(18)
+script_version('1.7.1')
+script_version_number(19)
 script_moonloader(27)
 
 require 'deps' {
@@ -749,5 +749,5 @@ function getPrefixByPlayerColor()
 end
 
 function getPrefixByTypeScriptWork()
-  return prefixes[data['profiles'][selectedProfile]['typescriptwork'] + 1]
+  return prefixesByTypeScriptWork[data['profiles'][selectedProfile]['typescriptwork'] + 1]
 end
