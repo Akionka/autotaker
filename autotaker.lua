@@ -22,7 +22,7 @@ local lastTagAvaliable = '1.0'
 encoding.default = 'cp1251'
 local u8 = encoding.UTF8
 
-local prefixes = {'police', 'fbi', 'army'}
+local prefixes = {'police', 'fbi', 'army', 'gov'}
 local close_next = false
 local orderList = {}
 local locked = false
@@ -35,6 +35,7 @@ local defaultProfile = {
     0 - PD,
     1 - FBI,
     2 - Army
+    3 - Goverment
   ]]
 
   police_items = {
@@ -93,6 +94,12 @@ local defaultProfile = {
     bshield = false,
   },
 
+  gov_items = {
+    armor = false,
+    icamera = false,
+    briefcase = false,
+  },
+
   police_guns = {
     stick = false,
     m4 = false,
@@ -122,6 +129,16 @@ local defaultProfile = {
     deagle = false,
     rifle = false,
     shotgun = false,
+    smkbomb = false,
+  },
+
+  gov_guns = {
+    stick = false,
+    m4 = false,
+    mp5 = false,
+    shotgun = false,
+    rifle = false,
+    deagle = false,
     smkbomb = false,
   },
 }
@@ -177,6 +194,8 @@ local names = {
     beretk = 'Берет «Krap»',
     beretd = 'Берет «Desant»',
     bshield = 'Баллистический щит',
+    icamera = 'Фотоаппарат для инспекций',
+    briefcase = 'Чемоданчик для инспекций',
   },
 
   guns = {
@@ -252,6 +271,12 @@ local lists = {
     'bshield',
   },
 
+  gov_items = {
+    'armor',
+    'icamera',
+    'briefcase',
+  },
+
   police_guns = {
     'stick',
     'm4',
@@ -281,6 +306,16 @@ local lists = {
     'deagle',
     'rifle',
     'shotgun',
+    'smkbomb',
+  },
+
+  gov_guns = {
+    'stick',
+    'm4',
+    'mp5',
+    'shotgun',
+    'rifle',
+    'deagle',
     'smkbomb',
   },
 }
@@ -545,7 +580,7 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
   end
 
 
-  if (id == 82 or id == 45) and close_next then
+  if (id == 82 or id == 83 or id == 84 or id == 45) and close_next then
     table.remove(orderList, 1)
     close_next = false
     sampSendDialogResponse(id, 1, 0, '')
