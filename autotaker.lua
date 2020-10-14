@@ -4,11 +4,13 @@ script_version('1.7.1')
 script_version_number(19)
 script_moonloader(27)
 
-require 'deps' {
-  'fyp:samp-lua',
-  'fyp:moon-imgui',
-  'Akionka:lua-semver',
-}
+if getMoonloaderVersion() >= 027 then
+  require 'deps' {
+    'fyp:samp-lua',
+    'fyp:moon-imgui',
+    'Akionka:lua-semver',
+  }
+end
 
 local sampev = require 'lib.samp.events'
 local encoding = require 'encoding'
@@ -475,14 +477,14 @@ function imgui.OnDrawFrame()
           imgui.Text('Автор: Akionka')
           imgui.Text('Версия: '..thisScript()['version_num']..' ('..thisScript()['version']..')')
           imgui.Text('Команды: /autotaker')
-          if updatesAvaliable and imgui.Button('Скачать обновление', imgui.ImVec2(150, 0)) then
+          if getMoonloaderVersion() >= 027 and updatesAvaliable and imgui.Button('Скачать обновление', imgui.ImVec2(150, 0)) then
             update()
             mainWindowState.v = false
           end
-          if not updatesAvaliable and imgui.Button('Проверить обновления', imgui.ImVec2(150, 0)) then
+          if getMoonloaderVersion() >= 027 and not updatesAvaliable and imgui.Button('Проверить обновления', imgui.ImVec2(150, 0)) then
             checkUpdates()
           end
-          imgui.SameLine()
+          if getMoonloaderVersion() >= 027 then imgui.SameLine() end
           if imgui.Button('Группа ВКонтакте', imgui.ImVec2(150, 0)) then os.execute('explorer "https://vk.com/akionkamods"') end
           if imgui.Button('Bug report [VK]', imgui.ImVec2(150, 0)) then os.execute('explorer "https://vk.com/akionka"') end
           imgui.SameLine()
@@ -648,7 +650,7 @@ function main()
   print(u8:decode('{FFFFFF}Версия: {9932cc}'..thisScript()['version']..'{FFFFFF}. Автор: {9932cc}Akionka{FFFFFF}.'))
   print(u8:decode('{FFFFFF}Приятного использования! :)'))
 
-  if data['settings']['alwaysAutoCheckUpdates'] then
+  if data['settings']['alwaysAutoCheckUpdates'] and getMoonloaderVersion() >= 027 then
     checkUpdates()
   end
 
