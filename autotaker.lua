@@ -1,8 +1,7 @@
 script_name('AutoTaker')
-script_author('akionka')
-script_version('1.7.1')
-script_version_number(19)
-script_moonloader(27)
+script_author('Akionka')
+script_version('1.8.0')
+script_version_number(21)
 
 if getMoonloaderVersion() >= 027 then
   require 'deps' {
@@ -16,6 +15,7 @@ local sampev = require 'lib.samp.events'
 local encoding = require 'encoding'
 local imgui = require 'imgui'
 local v = require 'semver'
+local inspect = require('inspect')
 
 local updatesAvaliable = false
 local lastTagAvaliable = '1.0'
@@ -29,10 +29,13 @@ local prefixesByColor = {
   [0xFF33AA33] = 'army',
   [0xFF4682B4] = 'gov',
 }
-local prefixesByTypeScriptWork = {'police','fbi','army','gov'}
+
+local prefixesByTypeScriptWork = {'police', 'fbi', 'army', 'gov'}
 local close_next = false
 local orderList = {}
-local locked = false
+local lockedAdditional = false
+local lockedGuns = false
+
 encoding.default = 'cp1251'
 u8 = encoding.UTF8
 
@@ -112,9 +115,11 @@ local defaultProfile = {
     m4 = false,
     mp5 = false,
     shotgun = false,
+    spas12 = false,
     rifle = false,
     deagle = false,
     smkbomb = false,
+    srifle = false,
   },
 
   fbi_guns = {
@@ -122,6 +127,7 @@ local defaultProfile = {
     m4 = false,
     mp5 = false,
     shotgun = false,
+    spas12 = false,
     rifle = false,
     deagle = false,
     srifle = false,
@@ -136,7 +142,9 @@ local defaultProfile = {
     deagle = false,
     rifle = false,
     shotgun = false,
+    spas12 = false,
     smkbomb = false,
+    srifle = false,
   },
 
   gov_guns = {
@@ -172,6 +180,7 @@ local tempBuffers = {}
 -- Ключ - внутрений ID предмета, значение - его название в ImGui диалоге
 local names = {
   items = {
+    ['_'] = '',
     armor = 'Бронежилет',
     larmor = 'Легкий бронежилет',
     nightvision = 'Прибор ночного видения',
@@ -216,6 +225,7 @@ local names = {
     sawnoff = 'Обрез',
     grenades = 'Гранаты',
     smkbomb = 'Дымовая шашка',
+    spas12 = 'Spas-12',
   },
 }
 
@@ -289,9 +299,11 @@ local lists = {
     'm4',
     'mp5',
     'shotgun',
+    'spas12',
     'rifle',
     'deagle',
     'smkbomb',
+    'srifle'
   },
 
   fbi_guns = {
@@ -299,9 +311,10 @@ local lists = {
     'm4',
     'mp5',
     'shotgun',
+    'spas12',
     'rifle',
     'deagle',
-    'rifle',
+    'srifle',
     'sawnoff',
     'grenades',
     'smkbomb',
@@ -313,7 +326,9 @@ local lists = {
     'deagle',
     'rifle',
     'shotgun',
+    'spas12',
     'smkbomb',
+    'srifle'
   },
 
   gov_guns = {
@@ -347,7 +362,7 @@ function imgui.OnDrawFrame()
       imgui.BeginGroup()
         imgui.BeginChild('Profiles', imgui.ImVec2(145, -imgui.GetItemsLineHeightWithSpacing() * 4 - imgui.GetStyle().ItemSpacing.y), true)
           for i, v in ipairs(data['profiles']) do
-            if imgui.Selectable(data['profiles'][i]['title']..'##'..i, selectedProfile == i, imgui.SelectableFlags.AllowDoubleClick) then
+            if imgui.Selectable(v['title']..'##'..i, selectedProfile == i, imgui.SelectableFlags.AllowDoubleClick) then
               selectedProfile = i
               if imgui.IsMouseDoubleClicked(0) then
                 tempBuffers['title'] = imgui.ImBuffer(data['profiles'][selectedProfile]['title'], 32)
@@ -375,20 +390,20 @@ function imgui.OnDrawFrame()
         imgui.EndChild()
         if imgui.Button('Добавить', imgui.ImVec2(145/2-5, 0)) then
           tempBuffers['title'] = imgui.ImBuffer('Profile', 32)
-          imgui.OpenPopup('Добавление профиля')
+          imgui.OpenPopup('Добавление профиля##'..#data['profiles'])
         end
         imgui.SameLine()
         if selectedProfile ~= 0 and imgui.Button('Удалить', imgui.ImVec2(145/2-5, 0)) then
           imgui.OpenPopup('Удаление профиля')
         end
 
-        if imgui.BeginPopupModal('Добавление профиля', nil, 64) then
+        if imgui.BeginPopupModal('Добавление профиля##'..#data['profiles'], nil, 64) then
           imgui.InputText('Название', tempBuffers['title'])
           imgui.Separator()
           imgui.SetCursorPosX((imgui.GetWindowWidth() - 240 + imgui.GetStyle().ItemSpacing.x) / 2)
           if imgui.Button('Готово', imgui.ImVec2(120, 0)) then
-            table.insert(data['profiles'], defaultProfile)
-            data['profiles'][#data['profiles']]['title'] = tempBuffers['title'].v
+            table.insert(data['profiles'], table.copy(defaultProfile))
+            data['profiles'][#data['profiles']]['title'] = tempBuffers['title'].v..''
             saveData()
             imgui.CloseCurrentPopup()
           end
@@ -502,25 +517,31 @@ function get_pickup_model(id, handle)
 end
 
 function sampev.onSendPickedUpPickup(id)
+  if not data['settings']['active'] then
+    return
+  end
+
   local pickup = sampGetPickupHandleBySampId(id)
   local pickuppoolPtr = sampGetPickupPoolPtr()
 
   if getPrefixByPlayerColor == nil then return true end
 
-  -- Доп. снаряжение
+  -- Дополнительное снаряжение
   if get_pickup_model(id, pickup) == 1242 then
-    if locked then return false end
+    if lockedAdditional then return false end
     if #orderList ~= 0 then return end
     for k, v in pairs(data['profiles'][selectedProfile][getPrefixByPlayerColor() .. '_items']) do
       if v then
         local i = searchForItem(lists[getPrefixByPlayerColor() .. '_items'], k)
-        table.insert(orderList, i - 1)
+        table.insert(orderList, i - ((getPrefixByPlayerColor() == 'police' or getPrefixByPlayerColor() == 'fbi') and 0 or 1))
       end
     end
+    print(inspect(orderList))
   end
 
   -- Оружейная
   if get_pickup_model(id, pickup) == 2061 then
+    if lockedGuns then return false end
     if #orderList ~= 0 then return end
     for k, v in pairs(data['profiles'][selectedProfile][getPrefixByPlayerColor() .. '_guns']) do
       if v then
@@ -528,22 +549,26 @@ function sampev.onSendPickedUpPickup(id)
         table.insert(orderList, i - 1)
       end
     end
+    print(inspect(orderList))
   end
 end
 
 function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
+  print(id, stytle, title, btn1, btn2)
+  -- Диалог "Дополнительное снаряжения"
   if (id == 81 or id == 83) and data['settings']['active'] then
     if #orderList == 0 then
-      locked = true
+      lockedAdditional = true
       alert('Можете отходить от пикапа. В течение следующих {9932cc}6 секунд{FFFFFF} он будет неактивен')
       lua_thread.create(function()
         wait(6000)
-        locked = false
+        lockedAdditional = false
       end)
       sampSendDialogResponse(id, 0, 0, '')
       return false
     end
     for k, v in pairs(orderList) do
+      print(k, v)
       if v then
         close_next = true
         sampSendDialogResponse(id, 1, orderList[1], '')
@@ -552,7 +577,7 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
     end
   end
 
-
+  -- Диалог с текстом "Вот ваш(а) ..."
   if (id == 82 or id == 83 or id == 84 or id == 45) and close_next then
     table.remove(orderList, 1)
     close_next = false
@@ -560,16 +585,24 @@ function sampev.onShowDialog(id, stytle, title, btn1, btn2, text)
     return false
   end
 
-  -- Оружейная
+  -- Диалог "Оружейная"
   if (id == 76 or id == 77 or id == 78) and data['settings']['active'] then
     for k, v in pairs(orderList) do
-      if v then
-        sampSendDialogResponse(id, 1, orderList[1], '')
-        table.remove(orderList, 1)
+      sampSendDialogResponse(id, 1, orderList[1], '')
+      table.remove(orderList, 1)
+      if #orderList == 0 then
+        lockedGuns = true
+        alert('Можете отходить от пикапа. В течение следующих {9932cc}6 секунд{FFFFFF} он будет неактивен')
+        lua_thread.create(function()
+          wait(6000)
+          lockedGuns = false
+        end)
         return false
       end
+      return false
     end
   end
+  return {id, stytle, id..' | '..title, btn1, btn2, text}
 end
 
 function applyCustomStyle()
@@ -653,6 +686,10 @@ function main()
   if data['settings']['alwaysAutoCheckUpdates'] and getMoonloaderVersion() >= 027 then
     checkUpdates()
   end
+
+  sampRegisterChatCommand('god', function()
+    print(inspect(orderList))
+  end)
 
   sampRegisterChatCommand('autotaker', function()
     mainWindowState.v = not mainWindowState.v
@@ -747,9 +784,19 @@ end
 function getPrefixByPlayerColor()
   local res, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
   local color = sampGetPlayerColor(id)
-  return prefixesByColor[color]
+  return prefixesByColor[color] or ''
 end
 
 function getPrefixByTypeScriptWork()
   return prefixesByTypeScriptWork[data['profiles'][selectedProfile]['typescriptwork'] + 1]
+end
+
+function table.copy(t)
+  local new_t = {}
+  for k, v in pairs(t) do
+    if type(v) == 'table' then
+      new_t[k] = table.copy(v)
+    end
+  end
+  return new_t
 end
