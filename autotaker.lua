@@ -15,7 +15,6 @@ local sampev = require 'lib.samp.events'
 local encoding = require 'encoding'
 local imgui = require 'imgui'
 local v = require 'semver'
-local inspect = require('inspect')
 
 local updatesAvaliable = false
 local lastTagAvaliable = '1.0'
@@ -536,7 +535,6 @@ function sampev.onSendPickedUpPickup(id)
         table.insert(orderList, i - ((getPrefixByPlayerColor() == 'police' or getPrefixByPlayerColor() == 'fbi') and 0 or 1))
       end
     end
-    print(inspect(orderList))
   end
 
   -- Оружейная
@@ -549,7 +547,6 @@ function sampev.onSendPickedUpPickup(id)
         table.insert(orderList, i - 1)
       end
     end
-    print(inspect(orderList))
   end
 end
 
@@ -686,10 +683,6 @@ function main()
   if data['settings']['alwaysAutoCheckUpdates'] and getMoonloaderVersion() >= 027 then
     checkUpdates()
   end
-
-  sampRegisterChatCommand('god', function()
-    print(inspect(orderList))
-  end)
 
   sampRegisterChatCommand('autotaker', function()
     mainWindowState.v = not mainWindowState.v
